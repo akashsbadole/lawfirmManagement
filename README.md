@@ -145,25 +145,27 @@ lawfirm-management/
 
 2.  Create a virtual environment:
 
-    python -m venv venv
+    `python -m venv venv`
 
-    source venv/bin/activate # On Windows: venv\Scripts\activate
+    `source venv/bin/activate` # On Windows: `venv\Scripts\activate`
 
 3.  Install dependencies:
 
-    pip install -r requirements.txt
+    `pip install -r requirements.txt`
 
 4.  Set up the database:
 
-    flask db init
+    `flask db init
 
     flask db migrate -m "Initial migration"
 
-    flask db upgrade
+    flask db upgrade`
+
+    `python -m app.populate_db`
 
 5.  Run the application:
 
-    python run.py
+    `python run.py`
 
 6.  Open your browser and go to `http://localhost:5000`
 
@@ -229,26 +231,28 @@ The application provides RESTful APIs for all features. The base URL is `/api`.
 
 1.  Build the Docker image:
 
-    docker build -t lawfirm-management .
+    `docker build -t lawfirm-management `.
 
 2.  Run the container:
 
-    docker run -p 5000:5000 lawfirm-management
+    `docker run -p 5000:5000 lawfirm-management`
 
 ### Manual Deployment
 
 1.  Set environment variables (create a `.env` file):
-
+    `
     FLASK_ENV=production
 
-    SECRET_KEY=your_secret_key
+        SECRET_KEY=your_secret_key
 
-    DATABASE_URL=postgresql://username:password@localhost/dbname
+        DATABASE_URL=postgresql://username:password@localhost/dbname
+
+    `
 
 2.  Install production dependencies:
 
-    pip install gunicorn
+    `pip install gunicorn`
 
 3.  Run with Gunicorn:
 
-    gunicorn -w 4 -b 0.0.0.0:5000 run:app
+` gunicorn -w 4 -b 0.0.0.0:5000 run:app`

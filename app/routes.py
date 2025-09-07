@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, jsonify, s
 from app import app, db
 from app.models import User, Client, Case, Appointment, Document, TimeEntry, Invoice, Payment
 from flask_login import current_user, login_user, logout_user, login_required
-from werkzeug.urls import url_parse
+from urllib.parse import urlparse
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename

@@ -16,4 +16,9 @@ login.login_view = 'login'
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
+from app.models import User
+
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))
 from app import routes, models

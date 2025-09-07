@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div>
+    <h1>Case Details</h1>
+    <h2>{{ case.title }}</h2>
+    <p>Case Number: {{ case.case_number }}</p>
+    <p>Description: {{ case.description }}</p>
+    <p>Status: {{ case.status }}</p>
+    <p>Priority: {{ case.priority }}</p>
+    <p>Practice Area: {{ case.practice_area }}</p>
+    <p>Case Type: {{ case.case_type }}</p>
+    <p>Budget: {{ case.budget }}</p> 
+</div>
+{% endblock %}
