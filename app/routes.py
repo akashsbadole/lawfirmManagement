@@ -11,6 +11,20 @@ from werkzeug.utils import secure_filename
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+from flask import abort
+from functools import wraps
+
+def role_required(allowed_roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if current_user.is_anonymous or current_user.role not in allowed_roles:
+                flash('You do not have permission to access this page.')
+                return redirect(url_for('dashboard')) # Redirect to dashboard or login
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 
 # Dashboard
 @app.route('/')
@@ -42,12 +56,14 @@ def dashboard():
 # Client Management
 @app.route('/clients')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def clients():
     clients = Client.query.all()
     return render_template('clients.html', clients=clients)
 
 @app.route('/clients/new', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def new_client():
     if request.method == 'POST':
         client = Client(
@@ -68,12 +84,14 @@ def new_client():
 
 @app.route('/clients/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def client_detail(id):
     client = Client.query.get_or_404(id)
     return render_template('client_detail.html', client=client)
 
 @app.route('/clients/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def edit_client(id):
     client = Client.query.get_or_404(id)
     if request.method == 'POST':
@@ -92,6 +110,7 @@ def edit_client(id):
 
 @app.route('/clients/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required(['admin'])
 def delete_client(id):
     client = Client.query.get_or_404(id)
     db.session.delete(client)
@@ -102,12 +121,14 @@ def delete_client(id):
 # Case Management
 @app.route('/cases')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def cases():
     cases = Case.query.all()
     return render_template('cases.html', cases=cases)
 
 @app.route('/cases/new', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def new_case():
     if request.method == 'POST':
         case = Case(
@@ -130,12 +151,14 @@ def new_case():
 
 @app.route('/cases/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def case_detail(id):
     case = Case.query.get_or_404(id)
     return render_template('case_detail.html', case=case)
 
 @app.route('/cases/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def edit_case(id):
     case = Case.query.get_or_404(id)
     if request.method == 'POST':
@@ -156,6 +179,7 @@ def edit_case(id):
 
 @app.route('/cases/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required(['admin'])
 def delete_case(id):
     case = Case.query.get_or_404(id)
     db.session.delete(case)
@@ -166,12 +190,14 @@ def delete_case(id):
 # Appointment Management
 @app.route('/appointments')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def appointments():
     appointments = Appointment.query.all()
     return render_template('appointments.html', appointments=appointments)
 
 @app.route('/appointments/new', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def new_appointment():
     if request.method == 'POST':
         appointment = Appointment(
@@ -196,12 +222,14 @@ def new_appointment():
 
 @app.route('/appointments/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def appointment_detail(id):
     appointment = Appointment.query.get_or_404(id)
     return render_template('appointment_detail.html', appointment=appointment)
 
 @app.route('/appointments/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def edit_appointment(id):
     appointment = Appointment.query.get_or_404(id)
     if request.method == 'POST':
@@ -223,6 +251,7 @@ def edit_appointment(id):
 
 @app.route('/appointments/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required(['admin'])
 def delete_appointment(id):
     appointment = Appointment.query.get_or_404(id)
     db.session.delete(appointment)
@@ -233,12 +262,14 @@ def delete_appointment(id):
 # Document Management
 @app.route('/documents')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def documents():
     documents = Document.query.all()
     return render_template('documents.html', documents=documents)
 
 @app.route('/documents/new', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def new_document():
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -276,18 +307,21 @@ def new_document():
 
 @app.route('/documents/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def document_detail(id):
     document = Document.query.get_or_404(id)
     return render_template('document_detail.html', document=document)
 
 @app.route('/documents/<int:id>/download', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def download_document(id):
     document = Document.query.get_or_404(id)
     return send_from_directory(app.config['UPLOAD_FOLDER'], document.filename, as_attachment=True)
 
 @app.route('/documents/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def edit_document(id):
     document = Document.query.get_or_404(id)
     if request.method == 'POST':
@@ -305,6 +339,7 @@ def edit_document(id):
 
 @app.route('/documents/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required(['admin'])
 def delete_document(id):
     document = Document.query.get_or_404(id)
     # Delete file from filesystem
@@ -320,12 +355,14 @@ def delete_document(id):
 # Time Tracking
 @app.route('/time_tracking')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def time_tracking():
     time_entries = TimeEntry.query.all()
     return render_template('time_tracking.html', time_entries=time_entries)
 
 @app.route('/time_entries/new', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def new_time_entry():
     if request.method == 'POST':
         if not request.form['client_id']:
@@ -354,12 +391,14 @@ def new_time_entry():
 
 @app.route('/time_entries/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def time_entry_detail(id):
     time_entry = TimeEntry.query.get_or_404(id)
     return render_template('time_entry_detail.html', time_entry=time_entry)
 
 @app.route('/time_entries/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def edit_time_entry(id):
     time_entry = TimeEntry.query.get_or_404(id)
     if request.method == 'POST':
@@ -381,6 +420,7 @@ def edit_time_entry(id):
 
 @app.route('/time_entries/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required(['admin'])
 def delete_time_entry(id):
     time_entry = TimeEntry.query.get_or_404(id)
     db.session.delete(time_entry)
@@ -391,12 +431,14 @@ def delete_time_entry(id):
 # Billing & Invoicing
 @app.route('/billing')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def billing():
     invoices = Invoice.query.all()
     return render_template('billing.html', invoices=invoices)
 
 @app.route('/invoices/new', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def new_invoice():
     if request.method == 'POST':
         # Generate unique invoice number
@@ -429,6 +471,7 @@ def new_invoice():
 
 @app.route('/invoices/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def invoice_detail(id):
     invoice = Invoice.query.get_or_404(id)
     payments = Payment.query.filter_by(invoice_id=id).all()
@@ -437,6 +480,7 @@ def invoice_detail(id):
 
 @app.route('/invoices/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def edit_invoice(id):
     invoice = Invoice.query.get_or_404(id)
     if request.method == 'POST':
@@ -457,6 +501,7 @@ def edit_invoice(id):
 
 @app.route('/invoices/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required(['admin'])
 def delete_invoice(id):
     invoice = Invoice.query.get_or_404(id)
     db.session.delete(invoice)
@@ -466,6 +511,7 @@ def delete_invoice(id):
 
 @app.route('/invoices/<int:id>/add_payment', methods=['POST'])
 @login_required
+@role_required(['admin', 'staff'])
 def add_payment(id):
     invoice = Invoice.query.get_or_404(id)
     payment = Payment(
@@ -489,6 +535,7 @@ def add_payment(id):
 # Search
 @app.route('/search')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def search():
     return render_template('search.html')
 
@@ -501,6 +548,7 @@ with open('legal_dictionary.json', 'r') as f:
 # Legal Dictionary API
 @app.route('/api/dictionary')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_dictionary():
     term = request.args.get('term', '').lower()
 
@@ -511,6 +559,7 @@ def api_dictionary():
 # Citation Checker API
 @app.route('/api/citation')
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_citation():
     citation = request.args.get('citation', '')
 
@@ -520,6 +569,7 @@ def api_citation():
 # API Routes
 @app.route('/api/clients', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_clients():
     clients = Client.query.all()
     return jsonify([{
@@ -536,6 +586,7 @@ def api_clients():
 
 @app.route('/api/clients', methods=['POST'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_create_client():
     data = request.get_json()
     client = Client(
@@ -554,6 +605,7 @@ def api_create_client():
 
 @app.route('/api/clients/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_client(id):
     client = Client.query.get_or_404(id)
     return jsonify({
@@ -570,6 +622,7 @@ def api_client(id):
 
 @app.route('/api/clients/<int:id>', methods=['PUT'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_update_client(id):
     client = Client.query.get_or_404(id)
     data = request.get_json()
@@ -586,6 +639,7 @@ def api_update_client(id):
 
 @app.route('/api/clients/<int:id>', methods=['DELETE'])
 @login_required
+@role_required(['admin'])
 def api_delete_client(id):
     client = Client.query.get_or_404(id)
     db.session.delete(client)
@@ -595,6 +649,7 @@ def api_delete_client(id):
 # Case API
 @app.route('/api/cases', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_cases():
     cases = Case.query.all()
     return jsonify([{
@@ -613,6 +668,7 @@ def api_cases():
 
 @app.route('/api/cases', methods=['POST'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_create_case():
     data = request.get_json()
     case = Case(
@@ -632,6 +688,7 @@ def api_create_case():
 
 @app.route('/api/cases/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_case(id):
     case = Case.query.get_or_404(id)
     return jsonify({
@@ -650,6 +707,7 @@ def api_case(id):
 
 @app.route('/api/cases/<int:id>', methods=['PUT'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_update_case(id):
     case = Case.query.get_or_404(id)
     data = request.get_json()
@@ -667,6 +725,7 @@ def api_update_case(id):
 
 @app.route('/api/cases/<int:id>', methods=['DELETE'])
 @login_required
+@role_required(['admin'])
 def api_delete_case(id):
     case = Case.query.get_or_404(id)
     db.session.delete(case)
@@ -676,6 +735,7 @@ def api_delete_case(id):
 # Appointment API
 @app.route('/api/appointments', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_appointments():
     appointments = Appointment.query.all()
     return jsonify([{
@@ -697,6 +757,7 @@ def api_appointments():
 
 @app.route('/api/appointments', methods=['POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_create_appointment():
     data = request.get_json()
     appointment = Appointment(
@@ -717,6 +778,7 @@ def api_create_appointment():
 
 @app.route('/api/appointments/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_appointment(id):
     appointment = Appointment.query.get_or_404(id)
     return jsonify({
@@ -738,6 +800,7 @@ def api_appointment(id):
 
 @app.route('/api/appointments/<int:id>', methods=['PUT'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_update_appointment(id):
     appointment = Appointment.query.get_or_404(id)
     data = request.get_json()
@@ -755,6 +818,7 @@ def api_update_appointment(id):
 
 @app.route('/api/appointments/<int:id>', methods=['DELETE'])
 @login_required
+@role_required(['admin'])
 def api_delete_appointment(id):
     appointment = Appointment.query.get_or_404(id)
     db.session.delete(appointment)
@@ -764,6 +828,7 @@ def api_delete_appointment(id):
 # Document API
 @app.route('/api/documents', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_documents():
     documents = Document.query.all()
     return jsonify([{
@@ -785,6 +850,7 @@ def api_documents():
 
 @app.route('/api/documents', methods=['POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_upload_document():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -816,6 +882,7 @@ def api_upload_document():
 
 @app.route('/api/documents/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_document(id):
     document = Document.query.get_or_404(id)
     return jsonify({
@@ -837,6 +904,7 @@ def api_document(id):
 
 @app.route('/api/documents/<int:id>', methods=['PUT'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_update_document(id):
     document = Document.query.get_or_404(id)
     data = request.get_json()
@@ -850,6 +918,7 @@ def api_update_document(id):
 
 @app.route('/api/documents/<int:id>', methods=['DELETE'])
 @login_required
+@role_required(['admin'])
 def api_delete_document(id):
     document = Document.query.get_or_404(id)
     # Delete file from filesystem
@@ -864,6 +933,7 @@ def api_delete_document(id):
 # Time Entry API
 @app.route('/api/time_entries', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_time_entries():
     time_entries = TimeEntry.query.all()
     return jsonify([{
@@ -885,6 +955,7 @@ def api_time_entries():
 
 @app.route('/api/time_entries', methods=['POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_create_time_entry():
     data = request.get_json()
     time_entry = TimeEntry(
@@ -904,6 +975,7 @@ def api_create_time_entry():
 
 @app.route('/api/time_entries/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_time_entry(id):
     time_entry = TimeEntry.query.get_or_404(id)
     return jsonify({
@@ -925,6 +997,7 @@ def api_time_entry(id):
 
 @app.route('/api/time_entries/<int:id>', methods=['PUT'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_update_time_entry(id):
     time_entry = TimeEntry.query.get_or_404(id)
     data = request.get_json()
@@ -941,6 +1014,7 @@ def api_update_time_entry(id):
 
 @app.route('/api/time_entries/<int:id>', methods=['DELETE'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_delete_time_entry(id):
     time_entry = TimeEntry.query.get_or_404(id)
     db.session.delete(time_entry)
@@ -950,6 +1024,7 @@ def api_delete_time_entry(id):
 # Invoice API
 @app.route('/api/invoices', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_invoices():
     invoices = Invoice.query.all()
     return jsonify([{
@@ -975,6 +1050,7 @@ def api_invoices():
 
 @app.route('/api/invoices', methods=['POST'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_create_invoice():
     data = request.get_json()
     # Generate unique invoice number
@@ -1002,6 +1078,7 @@ def api_create_invoice():
 
 @app.route('/api/invoices/<int:id>', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_invoice(id):
     invoice = Invoice.query.get_or_404(id)
     return jsonify({
@@ -1027,6 +1104,7 @@ def api_invoice(id):
 
 @app.route('/api/invoices/<int:id>', methods=['PUT'])
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_update_invoice(id):
     invoice = Invoice.query.get_or_404(id)
     data = request.get_json()
@@ -1042,6 +1120,7 @@ def api_update_invoice(id):
 
 @app.route('/api/invoices/<int:id>', methods=['DELETE'])
 @login_required
+@role_required(['admin'])
 def api_delete_invoice(id):
     invoice = Invoice.query.get_or_404(id)
     db.session.delete(invoice)
@@ -1051,6 +1130,7 @@ def api_delete_invoice(id):
 # Search API
 @app.route('/api/search', methods=['GET'])
 @login_required
+@role_required(['admin', 'lawyer', 'staff'])
 def api_search():
     query = request.args.get('q', '').lower()
     jurisdiction = request.args.get('jurisdiction', '').lower()
@@ -1115,6 +1195,7 @@ def api_search():
 # External Search API with mock data for now
 @app.route('/api/search/external')
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_search_external():
     query = request.args.get('q', '')
     search_engine = request.args.get('search_engine', 'google')
@@ -1156,6 +1237,7 @@ def api_search_external():
 # Search History API
 @app.route('/api/search/history')
 @login_required
+@role_required(['admin', 'lawyer'])
 def api_search_history():
     # Get current user's search history
     history = SearchHistory.query.filter_by(user_id=current_user.id)\

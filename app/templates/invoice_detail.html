@@ -1,0 +1,143 @@
+{% extends "base.html" %} {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Invoice #{{ invoice.invoice_number }}</h1>
+  <div>
+    <a href="{{ url_for('billing') }}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Billing
+    </a>
+    <a
+      href="{{ url_for('edit_invoice', id=invoice.id) }}"
+      class="btn btn-warning"
+    >
+      <i class="bi bi-pencil"></i> Edit Invoice
+    </a>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5>Invoice Details</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <p><strong>Invoice Number:</strong> {{ invoice.invoice_number }}</p>
+        <p>
+          <strong>Client:</strong> {{ invoice.client.first_name }} {{
+          invoice.client.last_name }}
+        </p>
+        <p>
+          <strong>Case:</strong> {{ invoice.case.title if invoice.case else '-'
+          }}
+        </p>
+      </div>
+      <div class="col-md-6">
+        <p>
+          <strong>Issue Date:</strong> {{
+          invoice.issue_date.strftime('%Y-%m-%d') if invoice.issue_date else
+          'Not set' }}
+        </p>
+        <p>
+          <strong>Due Date:</strong> {{ invoice.due_date.strftime('%Y-%m-%d') if
+          invoice.due_date else 'Not set' }}
+        </p>
+        <p><strong>Amount:</strong> ${{ invoice.amount }}</p>
+        <p>
+          <strong>Status:</strong>
+          {% if invoice.status == 'Draft' %}
+          <span class="badge bg-secondary">{{ invoice.status }}</span>
+          {% elif invoice.status == 'Sent' %}
+          <span class="badge bg-primary">{{ invoice.status }}</span>
+          {% elif invoice.status == 'Paid' %}
+          <span class="badge bg-success">{{ invoice.status }}</span>
+          {% else %}
+          <span class="badge bg-danger">{{ invoice.status }}</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    {% if invoice.notes %}
+    <div class="row mt-3">
+      <div class="col-12">
+        <p><strong>Notes:</strong></p>
+        <p class="text-muted">{{ invoice.notes }}</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5>Payments</h5>
+  </div>
+  <div class="card-body">
+    {% if payments %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in payments %}
+          <tr>
+            <td>
+              {{ payment.date.strftime('%Y-%m-%d') if payment.date else 'N/A' }}
+            </td>
+            <td>${{ payment.amount }}</td>
+            <td>{{ payment.method if payment.method else '-' }}</td>
+            <td>{{ payment.notes if payment.notes else '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No payments recorded.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5>Time Entries</h5>
+  </div>
+  <div class="card-body">
+    {% if time_entries %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Hours</th>
+            <th>Description</th>
+            <th>Rate</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in time_entries %}
+          <tr>
+            <td>
+              {{ entry.date.strftime('%Y-%m-%d') if entry.date else 'N/A' }}
+            </td>
+            <td>{{ entry.hours }}</td>
+            <td>{{ entry.description }}</td>
+            <td>${{ entry.rate if entry.rate else '-' }}</td>
+            <td>${{ (entry.hours * entry.rate) if entry.rate else '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No time entries recorded.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     first_name = db.Column(db.String(64))
     last_name = db.Column(db.String(64))
-    role = db.Column(db.String(20))  # 'lawyer', 'staff', 'admin'
+    role = db.Column(db.String(20))  # 'admin' (full access to system; manage users, roles, permissions, clients, cases, billing, payments; approve/reject invoices/time entries; access analytics, financial reports, firm-wide dashboards; configure system settings (billing rates, document categories, practice areas); assign lawyers/staff to cases), 'lawyer' (manage own cases & clients; add/edit case details, appointments, documents, time entries; track billable hours; generate invoices (pending admin approval); search legal database, access case law, add citations to cases; communicate with clients via notes/messages; cannot create/remove other users), 'staff' (support role, limited permissions; schedule appointments; upload and manage documents (evidence, contracts); draft invoices (cannot approve/send); record time entries on behalf of lawyers (if permitted); cannot delete cases or clients; cannot assign users)
     hourly_rate = db.Column(db.Float)
     cases = db.relationship('Case', secondary=case_assignments, backref=db.backref('assigned_users', lazy='dynamic'))
     time_entries = db.relationship('TimeEntry', backref='user', lazy='dynamic')
@@ -128,9 +128,12 @@ class Invoice(db.Model):
     notes = db.Column(db.Text)
     case_id = db.Column(db.Integer, db.ForeignKey('case.id'))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
+    client = db.relationship('Client', backref=db.backref('invoices', lazy=True))
     payments = db.relationship('Payment', backref='invoice', lazy='dynamic')
     time_entries = db.relationship('TimeEntry', backref='invoice', lazy='dynamic')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    date = db.Column(db.Date, default=datetime.utcnow)
+
 
     def __repr__(self):
         return f'<Invoice {self.invoice_number}>'
