@@ -10,11 +10,19 @@
     <div class="card-body">
         <form id="searchForm">
             <div class="row mb-3">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <input type="text" class="form-control" id="searchQuery" placeholder="Enter search terms...">
                 </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                <div class="col-md-3">
+                    <label class="form-label">Search Engine</label>
+                    <select class="form-select" id="searchEngine">
+                        <option value="google">Google</option>
+                        <option value="bing">Bing</option>
+                        <option value="duckduckgo">DuckDuckGo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 24px;">Search</button>
                 </div>
             </div>
             
@@ -65,6 +73,18 @@
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
+                <h5>Recent Search History</h5>
+            </div>
+            <div class="card-body">
+                <div id="searchHistory">
+                    <p class="text-muted">Your recent searches will appear here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
                 <h5>Legal Dictionary</h5>
             </div>
             <div class="card-body">
@@ -99,6 +119,41 @@
 
 {% block scripts %}
 <script>
+    // Load search history on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchSearchHistory();
+    });
+
+    function fetchSearchHistory() {
+        fetch('/api/search/history')
+            .then(response => response.json())
+            .then(data => {
+                const historyDiv = document.getElementById('searchHistory');
+                if (data.length > 0) {
+                    let historyHtml = '<div class="list-group">';
+                    data.forEach(item => {
+                        const resultCount = item.results ? item.results.length : 0;
+                        historyHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">${item.query}</h6>
+                                    <small>${new Date(item.created_at).toLocaleString()}</small>
+                                </div>
+                                <small class="text-muted">${item.search_engine} • ${resultCount} results</small>
+                            </div>
+                        `;
+                    });
+                    historyHtml += '</div>';
+                    historyDiv.innerHTML = historyHtml;
+                } else {
+                    historyDiv.innerHTML = '<p class="text-muted">No search history yet.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading search history:', error);
+            });
+    }
+
     document.getElementById('searchForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -107,83 +162,128 @@
         const caseType = document.getElementById('caseType').value;
         const dateFrom = document.getElementById('dateFrom').value;
         const dateTo = document.getElementById('dateTo').value;
+        const searchEngine = document.getElementById('searchEngine').value;
         
-        // Simulate search results
         const resultsDiv = document.getElementById('searchResults');
         resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         
-        setTimeout(() => {
-            resultsDiv.innerHTML = `
-                <div class="list-group">
-                    <div class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">Smith v. Johnson</h5>
-                            <small>2023-05-15</small>
+        // Use external search API
+        fetch(`/api/search/external?q=${encodeURIComponent(query)}&jurisdiction=${jurisdiction}&case_type=${caseType}&date_from=${dateFrom}&date_to=${dateTo}&search_engine=${searchEngine}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    let resultsHtml = `
+                        <div class="alert alert-info mb-3">
+                            <strong>Search Engine:</strong> ${data.search_engine}
+                            <strong class="ms-3">Results:</strong> ${data.results.length}
                         </div>
-                        <p class="mb-1">A landmark case in contract law that established new precedents for breach of contract claims.</p>
-                        <small>Supreme Court • Civil • Contract Law</small>
-                    </div>
-                    <div class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">Doe v. State of California</h5>
-                            <small>2022-11-30</small>
+                        <div class="list-group">
+                    `;
+                    
+                    data.results.forEach(result => {
+                        resultsHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="${result.link}" target="_blank" class="text-decoration-none">${result.title}</a>
+                                    </h5>
+                                    <small class="badge bg-secondary">${data.search_engine}</small>
+                                </div>
+                                <p class="mb-1">${result.snippet}</p>
+                                ${result.citation ? `<div class="mt-2"><strong>Citation:</strong> <code>${result.citation}</code></div>` : ''}
+                                <small class="text-muted">${result.displayLink}</small>
+                            </div>
+                        `;
+                    });
+                    resultsHtml += '</div>';
+                    resultsDiv.innerHTML = resultsHtml;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-warning">
+                            <strong>Search Engine:</strong> ${data.search_engine}
+                            <p class="mb-0 mt-2">No results found.</p>
                         </div>
-                        <p class="mb-1">A significant criminal case that redefined the standards for evidence admissibility.</p>
-                        <small>California Supreme Court • Criminal • Evidence</small>
-                    </div>
-                    <div class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">Administrative Law Reform Act</h5>
-                            <small>2023-01-20</small>
-                        </div>
-                        <p class="mb-1">Recent legislation that overhauls administrative procedures at the federal level.</p>
-                        <small>Federal Legislation • Administrative Law</small>
-                    </div>
-                </div>
-            `;
-        }, 1000);
+                    `;
+                }
+                
+                // Refresh search history
+                fetchSearchHistory();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while searching external sources.</div>';
+            });
     });
-    
+
     document.getElementById('searchDictionary').addEventListener('click', function() {
         const term = document.getElementById('dictionaryTerm').value;
         const resultDiv = document.getElementById('dictionaryResult');
-        
+
         if (!term) {
             resultDiv.innerHTML = '<p class="text-danger">Please enter a legal term.</p>';
             return;
         }
-        
+
         resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        
-        setTimeout(() => {
-            resultDiv.innerHTML = `
-                <h6>${term}</h6>
-                <p><strong>Definition:</strong> A legal principle or concept that refers to...</p>
-                <p><strong>Origin:</strong> Latin term meaning...</p>
-                <p><strong>Usage:</strong> Commonly used in contract law to describe...</p>
-            `;
-        }, 500);
+
+        fetch(`/api/dictionary?term=${term}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    let resultsHtml = '';
+                    data.forEach(item => {
+                        resultsHtml += `
+                            <h6>${item.term}</h6>
+                            <p><strong>Definition:</strong> ${item.definition}</p>
+                            <p><strong>Origin:</strong> ${item.origin}</p>
+                            <hr>
+                        `;
+                    });
+                    resultDiv.innerHTML = resultsHtml;
+                } else {
+                    resultDiv.innerHTML = '<p class="text-muted">No definition found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<p class="text-danger">An error occurred while searching the dictionary.</p>';
+            });
     });
-    
+
     document.getElementById('checkCitation').addEventListener('click', function() {
         const citation = document.getElementById('citationInput').value;
         const resultDiv = document.getElementById('citationResult');
-        
+
         if (!citation) {
             resultDiv.innerHTML = '<p class="text-danger">Please enter a citation.</p>';
             return;
         }
-        
+
         resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        
-        setTimeout(() => {
-            resultDiv.innerHTML = `
-                <div class="alert alert-success">
-                    <strong>Citation Valid:</strong> ${citation}
-                    <p class="mb-0 mt-2">This citation refers to a valid case in the Supreme Court records.</p>
-                </div>
-            `;
-        }, 500);
+
+        fetch(`/api/citation?citation=${citation}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Citation Valid:</strong> ${data.citation}
+                            <p class="mb-0 mt-2">This citation is valid.</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Citation Invalid:</strong> ${data.citation}
+                            <p class="mb-0 mt-2">This citation is not valid.</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<p class="text-danger">An error occurred while checking the citation.</p>';
+            });
     });
 </script>
 {% endblock %}

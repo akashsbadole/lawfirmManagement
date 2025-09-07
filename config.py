@@ -6,3 +6,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = 'uploads'
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max file size
+    # Search Engine API Keys (replace with actual keys)
+    GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY') or 'your-google-api-key'
+    GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX') or 'your-google-custom-search-engine-id'
+    BING_SEARCH_API_KEY = os.environ.get('BING_SEARCH_API_KEY') or 'your-bing-api-key'
+    DUCKDUCKGO_API_ENABLED = True  # DuckDuckGo doesn't require API key

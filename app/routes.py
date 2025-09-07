@@ -492,6 +492,31 @@ def add_payment(id):
 def search():
     return render_template('search.html')
 
+import json
+
+# Load legal dictionary
+with open('legal_dictionary.json', 'r') as f:
+    legal_dictionary = json.load(f)
+
+# Legal Dictionary API
+@app.route('/api/dictionary')
+@login_required
+def api_dictionary():
+    term = request.args.get('term', '').lower()
+
+    results = [item for item in legal_dictionary['legal_terms'] if term in item['term'].lower()]
+
+    return jsonify(results)
+
+# Citation Checker API
+@app.route('/api/citation')
+@login_required
+def api_citation():
+    citation = request.args.get('citation', '')
+
+    # Mock citation checker - always returns valid
+    return jsonify({'valid': True, 'citation': citation})
+
 # API Routes
 @app.route('/api/clients', methods=['GET'])
 @login_required
@@ -1027,61 +1052,127 @@ def api_delete_invoice(id):
 @app.route('/api/search', methods=['GET'])
 @login_required
 def api_search():
-    query = request.args.get('q', '')
-    jurisdiction = request.args.get('jurisdiction', '')
-    case_type = request.args.get('case_type', '')
+    query = request.args.get('q', '').lower()
+    jurisdiction = request.args.get('jurisdiction', '').lower()
+    case_type = request.args.get('case_type', '').lower()
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
+
+    # Construct the base query
+    results = Document.query
+
+    # Filter by query
+    if query:
+        results = results.filter(db.or_(
+            Document.filename.ilike(f'%{query}%'),
+            Document.original_filename.ilike(f'%{query}%'),
+            Document.category.ilike(f'%{query}%'),
+            Document.description.ilike(f'%{query}%')
+        ))
+
+    # Filter by jurisdiction (assuming you have a jurisdiction field in the Document model)
+    if jurisdiction:
+        results = results.filter(Document.category.ilike(f'%{jurisdiction}%'))
+
+    # Filter by case type (assuming you have a case_type field in the Document model)
+    if case_type:
+        results = results.filter(Document.category.ilike(f'%{case_type}%'))
+
+    # Filter by date range
+    if date_from:
+        results = results.filter(Document.uploaded_at >= date_from)
+    if date_to:
+        results = results.filter(Document.uploaded_at <= date_to)
     
-    # In a real implementation, this would query a legal database
-    # For this example, we'll return mock results
-    results = [
+    results = results.all()
+
+    # Convert results to a list of dictionaries
+    results_list = [{
+        'id': doc.id,
+        'filename': doc.filename,
+        'original_filename': doc.original_filename,
+        'category': doc.category,
+        'description': doc.description,
+        'confidential': doc.confidential,
+        'client_id': doc.client_id,
+        'case_id': doc.case_id,
+        'uploaded_at': doc.uploaded_at.isoformat()
+    } for doc in results]
+
+    return jsonify(results_list)
+    
+    # Create a new SearchQuery object
+    search_query = SearchQuery(query=query)
+    
+    # Append the document results to the search query
+    for doc in results:
+        search_query.results.append(doc)
+    
+    # Add and commit the search query to the database
+    db.session.add(search_query)
+    db.session.commit()
+
+# External Search API with mock data for now
+@app.route('/api/search/external')
+@login_required
+def api_search_external():
+    query = request.args.get('q', '')
+    search_engine = request.args.get('search_engine', 'google')
+    
+    # Mock response since external APIs require configuration
+    mock_results = [
         {
-            'id': 1,
-            'title': 'Smith v. Johnson',
-            'type': 'Case Law',
-            'jurisdiction': 'Federal',
-            'date': '2023-05-15',
-            'summary': 'A landmark case in contract law that established new precedents for breach of contract claims.',
-            'citation': '123 U.S. 456 (2023)'
+            "title": f"Legal Resource: {query}",
+            "link": "https://example.com/legal-resource",
+            "snippet": f"This is a sample result for your search: {query}. Implement actual API integration with Google/Bing/DuckDuckGo.",
+            "citation": "Sample v. Citation, 2023 WL 1234567",
+            "displayLink": "example.com"
         },
         {
-            'id': 2,
-            'title': 'Doe v. State of California',
-            'type': 'Case Law',
-            'jurisdiction': 'State',
-            'date': '2022-11-30',
-            'summary': 'A significant criminal case that redefined the standards for evidence admissibility.',
-            'citation': '456 Cal. 789 (2022)'
-        },
-        {
-            'id': 3,
-            'title': 'Administrative Law Reform Act',
-            'type': 'Statute',
-            'jurisdiction': 'Federal',
-            'date': '2023-01-20',
-            'summary': 'Recent legislation that overhauls administrative procedures at the federal level.',
-            'citation': 'Pub. L. 117-123'
+            "title": f"Case Law Reference: {query}",
+            "link": "https://example.com/case-law",
+            "snippet": f"Another sample result demonstrating the search functionality for: {query}",
+            "citation": "Reference, 2023 U.S. LEXIS 7890",
+            "displayLink": "legal-resources.com"
         }
     ]
     
-    # Filter results based on search parameters
-    if query:
-        results = [r for r in results if query.lower() in r['title'].lower() or query.lower() in r['summary'].lower()]
+    # Create search history entry
+    search_history = SearchHistory(
+        query=query,
+        results=mock_results,
+        search_engine=search_engine,
+        user_id=current_user.id
+    )
+    db.session.add(search_history)
+    db.session.commit()
     
-    if jurisdiction:
-        results = [r for r in results if jurisdiction.lower() in r['jurisdiction'].lower()]
+    return jsonify({
+        "results": mock_results,
+        "search_engine": search_engine,
+        "query": query
+    })
+
+# Search History API
+@app.route('/api/search/history')
+@login_required
+def api_search_history():
+    # Get current user's search history
+    history = SearchHistory.query.filter_by(user_id=current_user.id)\
+                               .order_by(SearchHistory.created_at.desc())\
+                               .limit(10).all()
     
-    if case_type:
-        results = [r for r in results if case_type.lower() in r['type'].lower()]
+    history_data = []
+    for item in history:
+        history_data.append({
+            "id": item.id,
+            "query": item.query,
+            "results": item.results or [],
+            "search_engine": item.search_engine,
+            "created_at": item.created_at.isoformat()
+        })
     
-    if date_from:
-        results = [r for r in results if r['date'] >= date_from]
-    
-    if date_to:
-        results = [r for r in results if r['date'] <= date_to]
-    
-    return jsonify(results)
+    return jsonify(history_data)
 
 # Login and Logout
 @app.route('/login', methods=['GET', 'POST'])

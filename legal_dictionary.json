@@ -1,0 +1,19 @@
+{
+  "legal_terms": [
+    {
+      "term": "Tort",
+      "definition": "A civil wrong that causes someone else to suffer loss or harm resulting in legal liability for the person who commits the tortious act.",
+      "origin": "Anglo-French"
+    },
+    {
+      "term": "Subpoena",
+      "definition": "A writ ordering a person to attend a court.",
+      "origin": "Latin"
+    },
+    {
+      "term": "Habeas Corpus",
+      "definition": "A writ requiring a person under arrest to be brought before a court or a judge, especially to secure the person's release unless lawful grounds are shown for their detention.",
+      "origin": "Latin"
+    }
+  ]
+}

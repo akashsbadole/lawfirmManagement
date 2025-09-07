@@ -146,3 +146,14 @@ class Payment(db.Model):
 
     def __repr__(self):
         return f'<Payment {self.id}>'
+
+class SearchHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    query = db.Column(db.String(512))
+    results = db.Column(db.JSON)   # store search results (title, link, snippet, citation)
+    search_engine = db.Column(db.String(50))  # Google, Bing, DuckDuckGo
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<SearchHistory {self.query}>'
