@@ -1,110 +1,136 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Cases</h1>
-    <a href="{{ url_for('new_case') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add New Case
+  <h1>Cases</h1>
+  <div>
+    <a
+      href="{{ request.referrer or url_for('cases') }}"
+      class="btn btn-secondary"
+    >
+      <i class="bi bi-arrow-left"></i> Back
     </a>
+
+    <a href="{{ url_for('new_case') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Add New Case
+    </a>
+  </div>
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">
-        <h5>Case List</h5>
+  <div class="card-header">
+    <h5>Case List</h5>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped" id="casesTable">
+        <thead>
+          <tr>
+            <th>Case #</th>
+            <th>Title</th>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Practice Area</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for case in cases %}
+          <tr>
+            <td>{{ case.case_number }}</td>
+            <td>{{ case.title }}</td>
+            <td>{{ case.client.first_name }} {{ case.client.last_name }}</td>
+            <td>
+              {% if case.status == 'Open' %}
+              <span class="badge bg-success">{{ case.status }}</span>
+              {% elif case.status == 'In Progress' %}
+              <span class="badge bg-primary">{{ case.status }}</span>
+              {% elif case.status == 'On Hold' %}
+              <span class="badge bg-warning text-dark">{{ case.status }}</span>
+              {% elif case.status == 'Closed' %}
+              <span class="badge bg-secondary">{{ case.status }}</span>
+              {% else %}
+              <span class="badge bg-info">{{ case.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if case.priority == 'Low' %}
+              <span class="badge bg-success">{{ case.priority }}</span>
+              {% elif case.priority == 'Medium' %}
+              <span class="badge bg-info">{{ case.priority }}</span>
+              {% elif case.priority == 'High' %}
+              <span class="badge bg-warning text-dark"
+                >{{ case.priority }}</span
+              >
+              {% else %}
+              <span class="badge bg-danger">{{ case.priority }}</span>
+              {% endif %}
+            </td>
+            <td>{{ case.practice_area }}</td>
+            <td>
+              <a
+                href="{{ url_for('case_detail', id=case.id) }}"
+                class="btn btn-sm btn-info"
+              >
+                <i class="bi bi-eye"></i>
+              </a>
+              <a
+                href="{{ url_for('edit_case', id=case.id) }}"
+                class="btn btn-sm btn-warning"
+              >
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                onclick="confirmDelete({{ case.id }}, '{{ case.title }}')"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped" id="casesTable">
-                <thead>
-                    <tr>
-                        <th>Case #</th>
-                        <th>Title</th>
-                        <th>Client</th>
-                        <th>Status</th>
-                        <th>Priority</th>
-                        <th>Practice Area</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for case in cases %}
-                    <tr>
-                        <td>{{ case.case_number }}</td>
-                        <td>{{ case.title }}</td>
-                        <td>{{ case.client.first_name }} {{ case.client.last_name }}</td>
-                        <td>
-                            {% if case.status == 'Open' %}
-                            <span class="badge bg-success">{{ case.status }}</span>
-                            {% elif case.status == 'In Progress' %}
-                            <span class="badge bg-primary">{{ case.status }}</span>
-                            {% elif case.status == 'On Hold' %}
-                            <span class="badge bg-warning text-dark">{{ case.status }}</span>
-                            {% elif case.status == 'Closed' %}
-                            <span class="badge bg-secondary">{{ case.status }}</span>
-                            {% else %}
-                            <span class="badge bg-info">{{ case.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if case.priority == 'Low' %}
-                            <span class="badge bg-success">{{ case.priority }}</span>
-                            {% elif case.priority == 'Medium' %}
-                            <span class="badge bg-info">{{ case.priority }}</span>
-                            {% elif case.priority == 'High' %}
-                            <span class="badge bg-warning text-dark">{{ case.priority }}</span>
-                            {% else %}
-                            <span class="badge bg-danger">{{ case.priority }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ case.practice_area }}</td>
-                        <td>
-                            <a href="{{ url_for('case_detail', id=case.id) }}" class="btn btn-sm btn-info">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="{{ url_for('edit_case', id=case.id) }}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ case.id }}, '{{ case.title }}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+  </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete case <span id="deleteItemName"></span>?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete case <span id="deleteItemName"></span>?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <form id="deleteForm" method="POST" style="display: inline">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-    function confirmDelete(id, name) {
-        document.getElementById('deleteItemName').textContent = name;
-        document.getElementById('deleteForm').action = '/cases/' + id + '/delete';
-        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        deleteModal.show();
-    }
+  function confirmDelete(id, name) {
+    document.getElementById("deleteItemName").textContent = name;
+    document.getElementById("deleteForm").action = "/cases/" + id + "/delete";
+    var deleteModal = new bootstrap.Modal(
+      document.getElementById("deleteModal")
+    );
+    deleteModal.show();
+  }
 </script>
 {% endblock %}

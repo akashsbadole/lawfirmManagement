@@ -328,6 +328,10 @@ def time_tracking():
 @login_required
 def new_time_entry():
     if request.method == 'POST':
+        if not request.form['client_id']:
+            flash('Client is required!')
+            return redirect(url_for('new_time_entry'))
+
         time_entry = TimeEntry(
             date=datetime.strptime(request.form['date'], '%Y-%m-%d'),
             hours=float(request.form['hours']),

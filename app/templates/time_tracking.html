@@ -1,108 +1,135 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Time Tracking</h1>
-    <a href="{{ url_for('new_time_entry') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Time Entry
+  <h1>Time Tracking</h1>
+  <div>
+    <a
+      href="{{ request.referrer or url_for('cases') }}"
+      class="btn btn-secondary"
+    >
+      <i class="bi bi-arrow-left"></i> Back
     </a>
+    <a href="{{ url_for('new_time_entry') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Add Time Entry
+    </a>
+  </div>
 </div>
 
 <div class="card mb-4">
-    <div class="card-header">
-        <h5>Time Entries</h5>
+  <div class="card-header">
+    <h5>Time Entries</h5>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped" id="timeEntriesTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>User</th>
+            <th>Client</th>
+            <th>Case</th>
+            <th>Hours</th>
+            <th>Rate</th>
+            <th>Billable</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in time_entries %}
+          <tr>
+            <td>{{ entry.date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ entry.user.first_name }} {{ entry.user.last_name }}</td>
+            <td>
+              {% if entry.client %} {{ entry.client.first_name }} {{
+              entry.client.last_name }} {% else %} N/A {% endif %}
+            </td>
+            <td>{{ entry.case.title if entry.case else '-' }}</td>
+            <td>{{ entry.hours }}</td>
+            <td>${{ entry.rate }}</td>
+            <td>
+              {% if entry.billable %}
+              <span class="badge bg-success">Yes</span>
+              {% else %}
+              <span class="badge bg-secondary">No</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if entry.status == 'Draft' %}
+              <span class="badge bg-secondary">{{ entry.status }}</span>
+              {% elif entry.status == 'Submitted' %}
+              <span class="badge bg-primary">{{ entry.status }}</span>
+              {% elif entry.status == 'Approved' %}
+              <span class="badge bg-success">{{ entry.status }}</span>
+              {% else %}
+              <span class="badge bg-danger">{{ entry.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a
+                href="{{ url_for('time_entry_detail', id=entry.id) }}"
+                class="btn btn-sm btn-info"
+              >
+                <i class="bi bi-eye"></i>
+              </a>
+              <a
+                href="{{ url_for('edit_time_entry', id=entry.id) }}"
+                class="btn btn-sm btn-warning"
+              >
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                onclick="confirmDelete({{ entry.id }}, 'Time Entry #{{ entry.id }}')"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped" id="timeEntriesTable">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>User</th>
-                        <th>Client</th>
-                        <th>Case</th>
-                        <th>Hours</th>
-                        <th>Rate</th>
-                        <th>Billable</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for entry in time_entries %}
-                    <tr>
-                        <td>{{ entry.date.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ entry.user.first_name }} {{ entry.user.last_name }}</td>
-                        <td>{{ entry.client.first_name }} {{ entry.client.last_name }}</td>
-                        <td>{{ entry.case.title if entry.case else '-' }}</td>
-                        <td>{{ entry.hours }}</td>
-                        <td>${{ entry.rate }}</td>
-                        <td>
-                            {% if entry.billable %}
-                            <span class="badge bg-success">Yes</span>
-                            {% else %}
-                            <span class="badge bg-secondary">No</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if entry.status == 'Draft' %}
-                            <span class="badge bg-secondary">{{ entry.status }}</span>
-                            {% elif entry.status == 'Submitted' %}
-                            <span class="badge bg-primary">{{ entry.status }}</span>
-                            {% elif entry.status == 'Approved' %}
-                            <span class="badge bg-success">{{ entry.status }}</span>
-                            {% else %}
-                            <span class="badge bg-danger">{{ entry.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('time_entry_detail', id=entry.id) }}" class="btn btn-sm btn-info">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="{{ url_for('edit_time_entry', id=entry.id) }}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ entry.id }}, 'Time Entry #{{ entry.id }}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+  </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete <span id="deleteItemName"></span>?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete <span id="deleteItemName"></span>?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <form id="deleteForm" method="POST" style="display: inline">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-    function confirmDelete(id, name) {
-        document.getElementById('deleteItemName').textContent = name;
-        document.getElementById('deleteForm').action = '/time_entries/' + id + '/delete';
-        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        deleteModal.show();
-    }
+  function confirmDelete(id, name) {
+    document.getElementById("deleteItemName").textContent = name;
+    document.getElementById("deleteForm").action =
+      "/time_entries/" + id + "/delete";
+    var deleteModal = new bootstrap.Modal(
+      document.getElementById("deleteModal")
+    );
+    deleteModal.show();
+  }
 </script>
 {% endblock %}
