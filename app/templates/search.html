@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Legal Search Engine</h1>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Search Legal Resources</h5>
+    </div>
+    <div class="card-body">
+        <form id="searchForm">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" id="searchQuery" placeholder="Enter search terms...">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Jurisdiction</label>
+                    <select class="form-select" id="jurisdiction">
+                        <option value="">All Jurisdictions</option>
+                        <option value="federal">Federal</option>
+                        <option value="state">State</option>
+                        <option value="local">Local</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Case Type</label>
+                    <select class="form-select" id="caseType">
+                        <option value="">All Case Types</option>
+                        <option value="civil">Civil</option>
+                        <option value="criminal">Criminal</option>
+                        <option value="administrative">Administrative</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="dateFrom">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date To</label>
+                    <input type="date" class="form-control" id="dateTo">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Search Results</h5>
+    </div>
+    <div class="card-body">
+        <div id="searchResults">
+            <p class="text-muted">Enter search terms and click Search to see results.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Legal Dictionary</h5>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="dictionaryTerm" placeholder="Enter a legal term...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchDictionary">Search</button>
+                </div>
+                <div id="dictionaryResult">
+                    <p class="text-muted">Enter a legal term to see its definition.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Citation Checker</h5>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="citationInput" placeholder="Enter a citation...">
+                    <button class="btn btn-outline-secondary" type="button" id="checkCitation">Check</button>
+                </div>
+                <div id="citationResult">
+                    <p class="text-muted">Enter a citation to verify it.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('searchQuery').value;
+        const jurisdiction = document.getElementById('jurisdiction').value;
+        const caseType = document.getElementById('caseType').value;
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+        
+        // Simulate search results
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        setTimeout(() => {
+            resultsDiv.innerHTML = `
+                <div class="list-group">
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Smith v. Johnson</h5>
+                            <small>2023-05-15</small>
+                        </div>
+                        <p class="mb-1">A landmark case in contract law that established new precedents for breach of contract claims.</p>
+                        <small>Supreme Court • Civil • Contract Law</small>
+                    </div>
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Doe v. State of California</h5>
+                            <small>2022-11-30</small>
+                        </div>
+                        <p class="mb-1">A significant criminal case that redefined the standards for evidence admissibility.</p>
+                        <small>California Supreme Court • Criminal • Evidence</small>
+                    </div>
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Administrative Law Reform Act</h5>
+                            <small>2023-01-20</small>
+                        </div>
+                        <p class="mb-1">Recent legislation that overhauls administrative procedures at the federal level.</p>
+                        <small>Federal Legislation • Administrative Law</small>
+                    </div>
+                </div>
+            `;
+        }, 1000);
+    });
+    
+    document.getElementById('searchDictionary').addEventListener('click', function() {
+        const term = document.getElementById('dictionaryTerm').value;
+        const resultDiv = document.getElementById('dictionaryResult');
+        
+        if (!term) {
+            resultDiv.innerHTML = '<p class="text-danger">Please enter a legal term.</p>';
+            return;
+        }
+        
+        resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        setTimeout(() => {
+            resultDiv.innerHTML = `
+                <h6>${term}</h6>
+                <p><strong>Definition:</strong> A legal principle or concept that refers to...</p>
+                <p><strong>Origin:</strong> Latin term meaning...</p>
+                <p><strong>Usage:</strong> Commonly used in contract law to describe...</p>
+            `;
+        }, 500);
+    });
+    
+    document.getElementById('checkCitation').addEventListener('click', function() {
+        const citation = document.getElementById('citationInput').value;
+        const resultDiv = document.getElementById('citationResult');
+        
+        if (!citation) {
+            resultDiv.innerHTML = '<p class="text-danger">Please enter a citation.</p>';
+            return;
+        }
+        
+        resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        setTimeout(() => {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Citation Valid:</strong> ${citation}
+                    <p class="mb-0 mt-2">This citation refers to a valid case in the Supreme Court records.</p>
+                </div>
+            `;
+        }, 500);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{% if time_entry %}Edit Time Entry{% else %}Add Time Entry{% endif %}</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-control" name="date" value="{{ time_entry.date.strftime('%Y-%m-%d') if time_entry else '' }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Hours</label>
+                    <input type="number" class="form-control" name="hours" value="{{ time_entry.hours if time_entry else '' }}" step="0.25" min="0" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3" required>{{ time_entry.description if time_entry else '' }}</textarea>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Rate ($)</label>
+                    <input type="number" class="form-control" name="rate" value="{{ time_entry.rate if time_entry else current_user.hourly_rate or '' }}" step="0.01" min="0" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Billable</label>
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" name="billable" id="billable" {% if time_entry and time_entry.billable %}checked{% else %}checked{% endif %}>
+                        <label class="form-check-label" for="billable">
+                            Mark as billable
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Client</label>
+                    <select class="form-select" name="client_id" required>
+                        <option value="">Select Client</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}" {% if time_entry and time_entry.client_id == client.id %}selected{% endif %}>{{ client.first_name }} {{ client.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Case (Optional)</label>
+                    <select class="form-select" name="case_id">
+                        <option value="">Select Case</option>
+                        {% for case in cases %}
+                        <option value="{{ case.id }}" {% if time_entry and time_entry.case_id == case.id %}selected{% endif %}>{{ case.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            {% if time_entry %}
+            <div class="mb-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status" required>
+                    <option value="Draft" {% if time_entry.status == 'Draft' %}selected{% endif %}>Draft</option>
+                    <option value="Submitted" {% if time_entry.status == 'Submitted' %}selected{% endif %}>Submitted</option>
+                    <option value="Approved" {% if time_entry.status == 'Approved' %}selected{% endif %}>Approved</option>
+                    <option value="Rejected" {% if time_entry.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-end">
+                <a href="{{ url_for('time_tracking') }}" class="btn btn-secondary me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

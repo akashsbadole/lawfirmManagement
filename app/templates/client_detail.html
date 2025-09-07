@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Client Details</h1>
+    <div>
+        <a href="{{ url_for('edit_client', id=client.id) }}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <button type="button" class="btn btn-danger" onclick="confirmDelete({{ client.id }}, '{{ client.first_name }} {{ client.last_name }}')">
+            <i class="bi bi-trash"></i> Delete
+        </button>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Personal Information</h5>
+                <p><strong>Name:</strong> {{ client.first_name }} {{ client.last_name }}</p>
+                <p><strong>Email:</strong> {{ client.email }}</p>
+                <p><strong>Phone:</strong> {{ client.phone }}</p>
+                <p><strong>Address:</strong> {{ client.address }}</p>
+            </div>
+            <div class="col-md-6">
+                <h5>Additional Information</h5>
+                <p><strong>Company:</strong> {{ client.company }}</p>
+                <p><strong>Category:</strong> {{ client.category }}</p>
+                <p><strong>Notes:</strong> {{ client.notes }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Associated Cases</h5>
+            </div>
+            <div class="card-body">
+                {% if client.cases %}
+                <div class="list-group">
+                    {% for case in client.cases %}
+                    <a href="{{ url_for('case_detail', id=case.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ case.title }}</h6>
+                            <small>{{ case.case_number }}</small>
+                        </div>
+                        <p class="mb-1">{{ case.practice_area }}</p>
+                        <small>Status: {{ case.status }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No cases associated with this client.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Associated Documents</h5>
+            </div>
+            <div class="card-body">
+                {% if client.documents %}
+                <div class="list-group">
+                    {% for document in client.documents %}
+                    <a href="{{ url_for('document_detail', id=document.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ document.original_filename }}</h6>
+                            <small>{{ document.uploaded_at.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <p class="mb-1">{{ document.category }}</p>
+                        <small>Confidential: {% if document.confidential %}Yes{% else %}No{% endif %}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No documents associated with this client.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete client <span id="deleteItemName"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDelete(id, name) {
+        document.getElementById('deleteItemName').textContent = name;
+        document.getElementById('deleteForm').action = '/clients/' + id + '/delete';
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

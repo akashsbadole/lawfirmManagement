@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Clients</h5>
+                <p class="card-text display-4">{{ client_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Cases</h5>
+                <p class="card-text display-4">{{ case_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Appointments</h5>
+                <p class="card-text display-4">{{ appointment_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Documents</h5>
+                <p class="card-text display-4">{{ document_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Time Entries</h5>
+                <p class="card-text display-4">{{ time_entry_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-secondary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Invoices</h5>
+                <p class="card-text display-4">{{ invoice_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Recent Cases</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Case #</th>
+                                <th>Title</th>
+                                <th>Client</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in recent_cases %}
+                            <tr>
+                                <td>{{ case.case_number }}</td>
+                                <td>{{ case.title }}</td>
+                                <td>{{ case.client.first_name }} {{ case.client.last_name }}</td>
+                                <td>
+                                    {% if case.status == 'Open' %}
+                                    <span class="badge bg-success">{{ case.status }}</span>
+                                    {% elif case.status == 'In Progress' %}
+                                    <span class="badge bg-primary">{{ case.status }}</span>
+                                    {% elif case.status == 'On Hold' %}
+                                    <span class="badge bg-warning text-dark">{{ case.status }}</span>
+                                    {% elif case.status == 'Closed' %}
+                                    <span class="badge bg-secondary">{{ case.status }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ case.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if case.priority == 'Low' %}
+                                    <span class="badge bg-success">{{ case.priority }}</span>
+                                    {% elif case.priority == 'Medium' %}
+                                    <span class="badge bg-info">{{ case.priority }}</span>
+                                    {% elif case.priority == 'High' %}
+                                    <span class="badge bg-warning text-dark">{{ case.priority }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ case.priority }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Upcoming Appointments</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date & Time</th>
+                                <th>Client</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in recent_appointments %}
+                            <tr>
+                                <td>{{ appointment.title }}</td>
+                                <td>{{ appointment.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ appointment.client.first_name }} {{ appointment.client.last_name }}</td>
+                                <td>{{ appointment.type }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

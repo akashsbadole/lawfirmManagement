@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Documents</h1>
+    <a href="{{ url_for('new_document') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Upload New Document
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Document List</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped" id="documentsTable">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Category</th>
+                        <th>Client</th>
+                        <th>Case</th>
+                        <th>Uploaded</th>
+                        <th>Confidential</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for document in documents %}
+                    <tr>
+                        <td>{{ document.original_filename }}</td>
+                        <td>{{ document.category }}</td>
+                        <td>{{ document.client.first_name }} {{ document.client.last_name }}</td>
+                        <td>{{ document.case.title if document.case else '-' }}</td>
+                        <td>{{ document.uploaded_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if document.confidential %}
+                            <span class="badge bg-danger">Yes</span>
+                            {% else %}
+                            <span class="badge bg-success">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('download_document', id=document.id) }}" class="btn btn-sm btn-info">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <a href="{{ url_for('document_detail', id=document.id) }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ document.id }}, '{{ document.original_filename }}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete document <span id="deleteItemName"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDelete(id, name) {
+        document.getElementById('deleteItemName').textContent = name;
+        document.getElementById('deleteForm').action = '/documents/' + id + '/delete';
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}
