@@ -153,10 +153,15 @@ class Payment(db.Model):
 class SearchHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     query = db.Column(db.String(512))
-    results = db.Column(db.JSON)   # store search results (title, link, snippet, citation)
-    search_engine = db.Column(db.String(50))  # Google, Bing, DuckDuckGo
+    search_type = db.Column(db.String(50), nullable=False, default='internal') # 'internal' or 'external'
+    jurisdiction = db.Column(db.String(100))
+    case_type = db.Column(db.String(100))
+    date_from = db.Column(db.Date)
+    date_to = db.Column(db.Date)
+    search_engine = db.Column(db.String(50))  # e.g., 'google', 'bing' for external searches
+    results = db.Column(db.JSON)   # stores results from either internal docs or external APIs
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<SearchHistory {self.query}>'
+        return f'<SearchHistory {self.query} ({self.search_type})>'

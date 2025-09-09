@@ -8,53 +8,79 @@
         <h5>Search Legal Resources</h5>
     </div>
     <div class="card-body">
-        <form id="searchForm">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="searchQuery" placeholder="Enter search terms...">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Search Engine</label>
-                    <select class="form-select" id="searchEngine">
-                        <option value="google">Google</option>
-                        <option value="bing">Bing</option>
-                        <option value="duckduckgo">DuckDuckGo</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 24px;">Search</button>
-                </div>
+        <ul class="nav nav-tabs mb-3" id="searchTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="internal-tab" data-bs-toggle="tab" data-bs-target="#internalSearch" type="button" role="tab" aria-controls="internalSearch" aria-selected="true">Internal Document Search</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="external-tab" data-bs-toggle="tab" data-bs-target="#externalSearch" type="button" role="tab" aria-controls="externalSearch" aria-selected="false">External Web Search</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="searchTabsContent">
+            <div class="tab-pane fade show active" id="internalSearch" role="tabpanel" aria-labelledby="internal-tab">
+                <form id="internalSearchForm">
+                    <div class="row mb-3">
+                        <div class="col-md-9">
+                            <input type="text" class="form-control" id="internalSearchQuery" placeholder="Enter terms for internal documents...">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100" style="margin-top: 0px;">Search Internal</button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Jurisdiction</label>
+                            <select class="form-select" id="internalJurisdiction">
+                                <option value="">All Jurisdictions</option>
+                                <option value="federal">Federal</option>
+                                <option value="state">State</option>
+                                <option value="local">Local</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Case Type</label>
+                            <select class="form-select" id="internalCaseType">
+                                <option value="">All Case Types</option>
+                                <option value="civil">Civil</option>
+                                <option value="criminal">Criminal</option>
+                                <option value="administrative">Administrative</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="internalDateFrom">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="internalDateTo">
+                        </div>
+                    </div>
+                </form>
             </div>
-            
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Jurisdiction</label>
-                    <select class="form-select" id="jurisdiction">
-                        <option value="">All Jurisdictions</option>
-                        <option value="federal">Federal</option>
-                        <option value="state">State</option>
-                        <option value="local">Local</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Case Type</label>
-                    <select class="form-select" id="caseType">
-                        <option value="">All Case Types</option>
-                        <option value="civil">Civil</option>
-                        <option value="criminal">Criminal</option>
-                        <option value="administrative">Administrative</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Date From</label>
-                    <input type="date" class="form-control" id="dateFrom">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Date To</label>
-                    <input type="date" class="form-control" id="dateTo">
-                </div>
+
+            <div class="tab-pane fade" id="externalSearch" role="tabpanel" aria-labelledby="external-tab">
+                <form id="externalSearchForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="externalSearchQuery" placeholder="Enter terms for external web search...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Search Engine</label>
+                            <select class="form-select" id="externalSearchEngine">
+                                <option value="google">Google</option>
+                                <option value="bing">Bing</option>
+                                <option value="duckduckgo">DuckDuckGo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100" style="margin-top: 24px;">Search External</button>
+                        </div>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -132,14 +158,16 @@
                 if (data.length > 0) {
                     let historyHtml = '<div class="list-group">';
                     data.forEach(item => {
-                        const resultCount = item.results ? item.results.length : 0;
+                        const searchSource = item.search_source || 'N/A';
+                        const resultCount = item.results_count || 0;
+                        const date = new Date(item.created_at).toLocaleString();
                         historyHtml += `
                             <div class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">${item.query}</h6>
-                                    <small>${new Date(item.created_at).toLocaleString()}</small>
+                                    <small>${date}</small>
                                 </div>
-                                <small class="text-muted">${item.search_engine} • ${resultCount} results</small>
+                                <small class="text-muted">${searchSource} • ${resultCount} results</small>
                             </div>
                         `;
                     });
@@ -154,32 +182,83 @@
             });
     }
 
-    document.getElementById('searchForm').addEventListener('submit', function(e) {
+    // Handle Internal Search Form submission
+    document.getElementById('internalSearchForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const query = document.getElementById('searchQuery').value;
-        const jurisdiction = document.getElementById('jurisdiction').value;
-        const caseType = document.getElementById('caseType').value;
-        const dateFrom = document.getElementById('dateFrom').value;
-        const dateTo = document.getElementById('dateTo').value;
-        const searchEngine = document.getElementById('searchEngine').value;
+        const query = document.getElementById('internalSearchQuery').value;
+        const jurisdiction = document.getElementById('internalJurisdiction').value;
+        const caseType = document.getElementById('internalCaseType').value;
+        const dateFrom = document.getElementById('internalDateFrom').value;
+        const dateTo = document.getElementById('internalDateTo').value;
         
         const resultsDiv = document.getElementById('searchResults');
         resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         
-        // Use external search API
-        fetch(`/api/search/external?q=${encodeURIComponent(query)}&jurisdiction=${jurisdiction}&case_type=${caseType}&date_from=${dateFrom}&date_to=${dateTo}&search_engine=${searchEngine}`)
+        fetch(`/api/search?q=${encodeURIComponent(query)}&jurisdiction=${jurisdiction}&case_type=${caseType}&date_from=${dateFrom}&date_to=${dateTo}`)
             .then(response => response.json())
             .then(data => {
                 if (data.results && data.results.length > 0) {
                     let resultsHtml = `
                         <div class="alert alert-info mb-3">
-                            <strong>Search Engine:</strong> ${data.search_engine}
+                            <strong>Internal Document Search</strong>
                             <strong class="ms-3">Results:</strong> ${data.results.length}
                         </div>
                         <div class="list-group">
                     `;
-                    
+                    data.results.forEach(result => {
+                        resultsHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="/documents/${result.id}" class="text-decoration-none">${result.original_filename}</a>
+                                    </h5>
+                                    <small class="badge bg-info">${result.category}</small>
+                                </div>
+                                <p class="mb-1">${result.description}</p>
+                                <small class="text-muted">Uploaded: ${new Date(result.uploaded_at).toLocaleDateString()}</small>
+                            </div>
+                        `;
+                    });
+                    resultsHtml += '</div>';
+                    resultsDiv.innerHTML = resultsHtml;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-warning">
+                            <strong>Internal Document Search</strong>
+                            <p class="mb-0 mt-2">No documents found matching your criteria.</p>
+                        </div>
+                    `;
+                }
+                fetchSearchHistory(); // Refresh search history after an internal search
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing internal search.</div>';
+            });
+    });
+
+    // Handle External Search Form submission
+    document.getElementById('externalSearchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('externalSearchQuery').value;
+        const searchEngine = document.getElementById('externalSearchEngine').value;
+        
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        fetch(`/api/search/external?q=${encodeURIComponent(query)}&search_engine=${searchEngine}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    let resultsHtml = `
+                        <div class="alert alert-info mb-3">
+                            <strong>External Web Search (${data.search_engine})</strong>
+                            <strong class="ms-3">Results:</strong> ${data.results.length}
+                        </div>
+                        <div class="list-group">
+                    `;
                     data.results.forEach(result => {
                         resultsHtml += `
                             <div class="list-group-item list-group-item-action">
@@ -200,18 +279,16 @@
                 } else {
                     resultsDiv.innerHTML = `
                         <div class="alert alert-warning">
-                            <strong>Search Engine:</strong> ${data.search_engine}
-                            <p class="mb-0 mt-2">No results found.</p>
+                            <strong>External Web Search (${data.search_engine})</strong>
+                            <p class="mb-0 mt-2">No external results found.</p>
                         </div>
                     `;
                 }
-                
-                // Refresh search history
-                fetchSearchHistory();
+                fetchSearchHistory(); // Refresh search history after an external search
             })
             .catch(error => {
                 console.error('Error:', error);
-                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while searching external sources.</div>';
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing external search.</div>';
             });
     });
 
@@ -230,18 +307,14 @@
             .then(response => response.json())
             .then(data => {
                 if (data.length > 0) {
-                    let resultsHtml = '';
-                    data.forEach(item => {
-                        resultsHtml += `
-                            <h6>${item.term}</h6>
-                            <p><strong>Definition:</strong> ${item.definition}</p>
-                            <p><strong>Origin:</strong> ${item.origin}</p>
-                            <hr>
-                        `;
-                    });
-                    resultDiv.innerHTML = resultsHtml;
+                    const firstItem = data[0]; // Assuming only one relevant definition or picking the first one
+                    resultDiv.innerHTML = `
+                        <h5 class="mb-1">${firstItem.term}</h5>
+                        <p><strong>Definition:</strong> ${firstItem.definition}</p>
+                        ${firstItem.origin ? `<p class="text-muted"><strong>Origin:</strong> ${firstItem.origin}</p>` : ''}
+                    `;
                 } else {
-                    resultDiv.innerHTML = '<p class="text-muted">No definition found.</p>';
+                    resultDiv.innerHTML = '<p class="text-muted">No definition found for this term.</p>';
                 }
             })
             .catch(error => {

@@ -1,18 +1,19 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify, send_from_directory
 from app import app, db
-from app.models import User, Client, Case, Appointment, Document, TimeEntry, Invoice, Payment
+from app.models import User, Client, Case, Appointment, Document, TimeEntry, Invoice, Payment, SearchHistory
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlparse
 from datetime import datetime
-import os
+import os, json
 from werkzeug.utils import secure_filename
-
-# Helper function to check file extension
-def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 from flask import abort
 from functools import wraps
+
+# Load legal dictionary (JSON) at application startup
+# This ensures it's only loaded once when the Flask app initializes.
+# Make sure 'legal_dictionary.json' is in the root directory or adjust path.
+with open('legal_dictionary.json', 'r') as f:
+    legal_dictionary = json.load(f)
 
 def role_required(allowed_roles):
     def decorator(f):
@@ -532,21 +533,14 @@ def add_payment(id):
     flash('Payment added successfully!')
     return redirect(url_for('invoice_detail', id=id))
 
-# Search
+# Search related routes
 @app.route('/search')
 @login_required
 @role_required(['admin', 'lawyer', 'staff'])
 def search():
     return render_template('search.html')
 
-import json
-
-# Load legal dictionary
-with open('legal_dictionary.json', 'r') as f:
-    legal_dictionary = json.load(f)
-
-# Legal Dictionary API
-@app.route('/api/dictionary')
+@app.route('/api/dictionary', methods=['GET'])
 @login_required
 @role_required(['admin', 'lawyer', 'staff'])
 def api_dictionary():
@@ -556,592 +550,30 @@ def api_dictionary():
 
     return jsonify(results)
 
-# Citation Checker API
-@app.route('/api/citation')
+@app.route('/api/citation', methods=['GET'])
 @login_required
 @role_required(['admin', 'lawyer', 'staff'])
 def api_citation():
     citation = request.args.get('citation', '')
 
-    # Mock citation checker - always returns valid
+    # Mock citation checker for now - always returns valid
     return jsonify({'valid': True, 'citation': citation})
 
-# API Routes
-@app.route('/api/clients', methods=['GET'])
+@app.route('/api/internal-search', methods=['GET'])
 @login_required
 @role_required(['admin', 'lawyer', 'staff'])
-def api_clients():
-    clients = Client.query.all()
-    return jsonify([{
-        'id': client.id,
-        'first_name': client.first_name,
-        'last_name': client.last_name,
-        'email': client.email,
-        'phone': client.phone,
-        'address': client.address,
-        'company': client.company,
-        'category': client.category,
-        'notes': client.notes
-    } for client in clients])
-
-@app.route('/api/clients', methods=['POST'])
-@login_required
-@role_required(['admin', 'lawyer'])
-def api_create_client():
-    data = request.get_json()
-    client = Client(
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        email=data['email'],
-        phone=data['phone'],
-        address=data['address'],
-        company=data['company'],
-        category=data['category'],
-        notes=data['notes']
-    )
-    db.session.add(client)
-    db.session.commit()
-    return jsonify({'id': client.id}), 201
-
-@app.route('/api/clients/<int:id>', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_client(id):
-    client = Client.query.get_or_404(id)
-    return jsonify({
-        'id': client.id,
-        'first_name': client.first_name,
-        'last_name': client.last_name,
-        'email': client.email,
-        'phone': client.phone,
-        'address': client.address,
-        'company': client.company,
-        'category': client.category,
-        'notes': client.notes
-    })
-
-@app.route('/api/clients/<int:id>', methods=['PUT'])
-@login_required
-@role_required(['admin', 'lawyer'])
-def api_update_client(id):
-    client = Client.query.get_or_404(id)
-    data = request.get_json()
-    client.first_name = data['first_name']
-    client.last_name = data['last_name']
-    client.email = data['email']
-    client.phone = data['phone']
-    client.address = data['address']
-    client.company = data['company']
-    client.category = data['category']
-    client.notes = data['notes']
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-@app.route('/api/clients/<int:id>', methods=['DELETE'])
-@login_required
-@role_required(['admin'])
-def api_delete_client(id):
-    client = Client.query.get_or_404(id)
-    db.session.delete(client)
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-# Case API
-@app.route('/api/cases', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_cases():
-    cases = Case.query.all()
-    return jsonify([{
-        'id': case.id,
-        'case_number': case.case_number,
-        'title': case.title,
-        'description': case.description,
-        'status': case.status,
-        'priority': case.priority,
-        'practice_area': case.practice_area,
-        'case_type': case.case_type,
-        'budget': case.budget,
-        'client_id': case.client_id,
-        'client_name': f"{case.client.first_name} {case.client.last_name}" if case.client else None
-    } for case in cases])
-
-@app.route('/api/cases', methods=['POST'])
-@login_required
-@role_required(['admin', 'lawyer'])
-def api_create_case():
-    data = request.get_json()
-    case = Case(
-        case_number=data['case_number'],
-        title=data['title'],
-        description=data['description'],
-        status=data['status'],
-        priority=data['priority'],
-        practice_area=data['practice_area'],
-        case_type=data['case_type'],
-        budget=data['budget'],
-        client_id=data['client_id']
-    )
-    db.session.add(case)
-    db.session.commit()
-    return jsonify({'id': case.id}), 201
-
-@app.route('/api/cases/<int:id>', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_case(id):
-    case = Case.query.get_or_404(id)
-    return jsonify({
-        'id': case.id,
-        'case_number': case.case_number,
-        'title': case.title,
-        'description': case.description,
-        'status': case.status,
-        'priority': case.priority,
-        'practice_area': case.practice_area,
-        'case_type': case.case_type,
-        'budget': case.budget,
-        'client_id': case.client_id,
-        'client_name': f"{case.client.first_name} {case.client.last_name}" if case.client else None
-    })
-
-@app.route('/api/cases/<int:id>', methods=['PUT'])
-@login_required
-@role_required(['admin', 'lawyer'])
-def api_update_case(id):
-    case = Case.query.get_or_404(id)
-    data = request.get_json()
-    case.case_number = data['case_number']
-    case.title = data['title']
-    case.description = data['description']
-    case.status = data['status']
-    case.priority = data['priority']
-    case.practice_area = data['practice_area']
-    case.case_type = data['case_type']
-    case.budget = data['budget']
-    case.client_id = data['client_id']
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-@app.route('/api/cases/<int:id>', methods=['DELETE'])
-@login_required
-@role_required(['admin'])
-def api_delete_case(id):
-    case = Case.query.get_or_404(id)
-    db.session.delete(case)
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-# Appointment API
-@app.route('/api/appointments', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_appointments():
-    appointments = Appointment.query.all()
-    return jsonify([{
-        'id': appointment.id,
-        'title': appointment.title,
-        'start_time': appointment.start_time.isoformat(),
-        'end_time': appointment.end_time.isoformat(),
-        'location': appointment.location,
-        'type': appointment.type,
-        'status': appointment.status,
-        'notes': appointment.notes,
-        'client_id': appointment.client_id,
-        'client_name': f"{appointment.client.first_name} {appointment.client.last_name}" if appointment.client else None,
-        'case_id': appointment.case_id,
-        'case_title': appointment.case.title if appointment.case else None,
-        'user_id': appointment.user_id,
-        'user_name': f"{appointment.user.first_name} {appointment.user.last_name}"
-    } for appointment in appointments])
-
-@app.route('/api/appointments', methods=['POST'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_create_appointment():
-    data = request.get_json()
-    appointment = Appointment(
-        title=data['title'],
-        start_time=datetime.fromisoformat(data['start_time']),
-        end_time=datetime.fromisoformat(data['end_time']),
-        location=data['location'],
-        type=data['type'],
-        status=data['status'],
-        notes=data['notes'],
-        client_id=data['client_id'],
-        case_id=data.get('case_id'),
-        user_id=current_user.id
-    )
-    db.session.add(appointment)
-    db.session.commit()
-    return jsonify({'id': appointment.id}), 201
-
-@app.route('/api/appointments/<int:id>', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_appointment(id):
-    appointment = Appointment.query.get_or_404(id)
-    return jsonify({
-        'id': appointment.id,
-        'title': appointment.title,
-        'start_time': appointment.start_time.isoformat(),
-        'end_time': appointment.end_time.isoformat(),
-        'location': appointment.location,
-        'type': appointment.type,
-        'status': appointment.status,
-        'notes': appointment.notes,
-        'client_id': appointment.client_id,
-        'client_name': f"{appointment.client.first_name} {appointment.client.last_name}" if appointment.client else None,
-        'case_id': appointment.case_id,
-        'case_title': appointment.case.title if appointment.case else None,
-        'user_id': appointment.user_id,
-        'user_name': f"{appointment.user.first_name} {appointment.user.last_name}"
-    })
-
-@app.route('/api/appointments/<int:id>', methods=['PUT'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_update_appointment(id):
-    appointment = Appointment.query.get_or_404(id)
-    data = request.get_json()
-    appointment.title = data['title']
-    appointment.start_time = datetime.fromisoformat(data['start_time'])
-    appointment.end_time = datetime.fromisoformat(data['end_time'])
-    appointment.location = data['location']
-    appointment.type = data['type']
-    appointment.status = data['status']
-    appointment.notes = data['notes']
-    appointment.client_id = data['client_id']
-    appointment.case_id = data.get('case_id')
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-@app.route('/api/appointments/<int:id>', methods=['DELETE'])
-@login_required
-@role_required(['admin'])
-def api_delete_appointment(id):
-    appointment = Appointment.query.get_or_404(id)
-    db.session.delete(appointment)
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-# Document API
-@app.route('/api/documents', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_documents():
-    documents = Document.query.all()
-    return jsonify([{
-        'id': document.id,
-        'filename': document.filename,
-        'original_filename': document.original_filename,
-        'category': document.category,
-        'description': document.description,
-        'confidential': document.confidential,
-        'version': document.version,
-        'client_id': document.client_id,
-        'client_name': f"{document.client.first_name} {document.client.last_name}" if document.client else None,
-        'case_id': document.case_id,
-        'case_title': document.case.title if document.case else None,
-        'uploaded_at': document.uploaded_at.isoformat(),
-        'uploaded_by': document.uploaded_by,
-        'uploader_name': f"{document.uploader.first_name} {document.uploader.last_name}"
-    } for document in documents])
-
-@app.route('/api/documents', methods=['POST'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_upload_document():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-    
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        original_filename = file.filename
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        
-        document = Document(
-            filename=filename,
-            original_filename=original_filename,
-            category=request.form['category'],
-            description=request.form['description'],
-            confidential=True if request.form.get('confidential') else False,
-            client_id=request.form['client_id'],
-            case_id=request.form.get('case_id'),
-            uploaded_by=current_user.id
-        )
-        db.session.add(document)
-        db.session.commit()
-        return jsonify({'id': document.id}), 201
-    
-    return jsonify({'error': 'File type not allowed'}), 400
-
-@app.route('/api/documents/<int:id>', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_document(id):
-    document = Document.query.get_or_404(id)
-    return jsonify({
-        'id': document.id,
-        'filename': document.filename,
-        'original_filename': document.original_filename,
-        'category': document.category,
-        'description': document.description,
-        'confidential': document.confidential,
-        'version': document.version,
-        'client_id': document.client_id,
-        'client_name': f"{document.client.first_name} {document.client.last_name}" if document.client else None,
-        'case_id': document.case_id,
-        'case_title': document.case.title if document.case else None,
-        'uploaded_at': document.uploaded_at.isoformat(),
-        'uploaded_by': document.uploaded_by,
-        'uploader_name': f"{document.uploader.first_name} {document.uploader.last_name}"
-    })
-
-@app.route('/api/documents/<int:id>', methods=['PUT'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_update_document(id):
-    document = Document.query.get_or_404(id)
-    data = request.get_json()
-    document.category = data['category']
-    document.description = data['description']
-    document.confidential = data['confidential']
-    document.client_id = data['client_id']
-    document.case_id = data.get('case_id')
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-@app.route('/api/documents/<int:id>', methods=['DELETE'])
-@login_required
-@role_required(['admin'])
-def api_delete_document(id):
-    document = Document.query.get_or_404(id)
-    # Delete file from filesystem
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filename)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-    
-    db.session.delete(document)
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-# Time Entry API
-@app.route('/api/time_entries', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_time_entries():
-    time_entries = TimeEntry.query.all()
-    return jsonify([{
-        'id': entry.id,
-        'date': entry.date.isoformat(),
-        'hours': entry.hours,
-        'description': entry.description,
-        'billable': entry.billable,
-        'rate': entry.rate,
-        'user_id': entry.user_id,
-        'user_name': f"{entry.user.first_name} {entry.user.last_name}",
-        'case_id': entry.case_id,
-        'case_title': entry.case.title if entry.case else None,
-        'client_id': entry.client_id,
-        'client_name': f"{entry.client.first_name} {entry.client.last_name}",
-        'invoice_id': entry.invoice_id,
-        'status': entry.status
-    } for entry in time_entries])
-
-@app.route('/api/time_entries', methods=['POST'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_create_time_entry():
-    data = request.get_json()
-    time_entry = TimeEntry(
-        date=datetime.fromisoformat(data['date']),
-        hours=data['hours'],
-        description=data['description'],
-        billable=data['billable'],
-        rate=data['rate'],
-        user_id=current_user.id,
-        case_id=data.get('case_id'),
-        client_id=data['client_id'],
-        status='Draft'
-    )
-    db.session.add(time_entry)
-    db.session.commit()
-    return jsonify({'id': time_entry.id}), 201
-
-@app.route('/api/time_entries/<int:id>', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_time_entry(id):
-    time_entry = TimeEntry.query.get_or_404(id)
-    return jsonify({
-        'id': time_entry.id,
-        'date': time_entry.date.isoformat(),
-        'hours': time_entry.hours,
-        'description': time_entry.description,
-        'billable': time_entry.billable,
-        'rate': time_entry.rate,
-        'user_id': time_entry.user_id,
-        'user_name': f"{time_entry.user.first_name} {time_entry.user.last_name}",
-        'case_id': time_entry.case_id,
-        'case_title': time_entry.case.title if time_entry.case else None,
-        'client_id': time_entry.client_id,
-        'client_name': f"{time_entry.client.first_name} {time_entry.client.last_name}",
-        'invoice_id': time_entry.invoice_id,
-        'status': time_entry.status
-    })
-
-@app.route('/api/time_entries/<int:id>', methods=['PUT'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_update_time_entry(id):
-    time_entry = TimeEntry.query.get_or_404(id)
-    data = request.get_json()
-    time_entry.date = datetime.fromisoformat(data['date'])
-    time_entry.hours = data['hours']
-    time_entry.description = data['description']
-    time_entry.billable = data['billable']
-    time_entry.rate = data['rate']
-    time_entry.case_id = data.get('case_id')
-    time_entry.client_id = data['client_id']
-    time_entry.status = data['status']
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-@app.route('/api/time_entries/<int:id>', methods=['DELETE'])
-@login_required
-@role_required(['admin', 'lawyer'])
-def api_delete_time_entry(id):
-    time_entry = TimeEntry.query.get_or_404(id)
-    db.session.delete(time_entry)
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-# Invoice API
-@app.route('/api/invoices', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_invoices():
-    invoices = Invoice.query.all()
-    return jsonify([{
-        'id': invoice.id,
-        'invoice_number': invoice.invoice_number,
-        'issue_date': invoice.issue_date.isoformat(),
-        'due_date': invoice.due_date.isoformat(),
-        'amount': invoice.amount,
-        'status': invoice.status,
-        'notes': invoice.notes,
-        'case_id': invoice.case_id,
-        'case_title': invoice.case.title if invoice.case else None,
-        'client_id': invoice.client_id,
-        'client_name': f"{invoice.client.first_name} {invoice.client.last_name}",
-        'payments': [{
-            'id': payment.id,
-            'amount': payment.amount,
-            'payment_date': payment.payment_date.isoformat(),
-            'method': payment.method,
-            'reference': payment.reference
-        } for payment in invoice.payments]
-    } for invoice in invoices])
-
-@app.route('/api/invoices', methods=['POST'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_create_invoice():
-    data = request.get_json()
-    # Generate unique invoice number
-    last_invoice = Invoice.query.order_by(Invoice.id.desc()).first()
-    if last_invoice:
-        last_num = int(last_invoice.invoice_number[3:])
-        new_num = last_num + 1
-    else:
-        new_num = 1000
-    invoice_number = f"INV{new_num}"
-    
-    invoice = Invoice(
-        invoice_number=invoice_number,
-        issue_date=datetime.fromisoformat(data['issue_date']),
-        due_date=datetime.fromisoformat(data['due_date']),
-        amount=data['amount'],
-        status=data['status'],
-        notes=data['notes'],
-        case_id=data.get('case_id'),
-        client_id=data['client_id']
-    )
-    db.session.add(invoice)
-    db.session.commit()
-    return jsonify({'id': invoice.id}), 201
-
-@app.route('/api/invoices/<int:id>', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_invoice(id):
-    invoice = Invoice.query.get_or_404(id)
-    return jsonify({
-        'id': invoice.id,
-        'invoice_number': invoice.invoice_number,
-        'issue_date': invoice.issue_date.isoformat(),
-        'due_date': invoice.due_date.isoformat(),
-        'amount': invoice.amount,
-        'status': invoice.status,
-        'notes': invoice.notes,
-        'case_id': invoice.case_id,
-        'case_title': invoice.case.title if invoice.case else None,
-        'client_id': invoice.client_id,
-        'client_name': f"{invoice.client.first_name} {invoice.client.last_name}",
-        'payments': [{
-            'id': payment.id,
-            'amount': payment.amount,
-            'payment_date': payment.payment_date.isoformat(),
-            'method': payment.method,
-            'reference': payment.reference
-        } for payment in invoice.payments]
-    })
-
-@app.route('/api/invoices/<int:id>', methods=['PUT'])
-@login_required
-@role_required(['admin', 'lawyer'])
-def api_update_invoice(id):
-    invoice = Invoice.query.get_or_404(id)
-    data = request.get_json()
-    invoice.issue_date = datetime.fromisoformat(data['issue_date'])
-    invoice.due_date = datetime.fromisoformat(data['due_date'])
-    invoice.amount = data['amount']
-    invoice.status = data['status']
-    invoice.notes = data['notes']
-    invoice.case_id = data.get('case_id')
-    invoice.client_id = data['client_id']
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-@app.route('/api/invoices/<int:id>', methods=['DELETE'])
-@login_required
-@role_required(['admin'])
-def api_delete_invoice(id):
-    invoice = Invoice.query.get_or_404(id)
-    db.session.delete(invoice)
-    db.session.commit()
-    return jsonify({'status': 'success'})
-
-# Search API
-@app.route('/api/search', methods=['GET'])
-@login_required
-@role_required(['admin', 'lawyer', 'staff'])
-def api_search():
+def api_internal_search():
     query = request.args.get('q', '').lower()
     jurisdiction = request.args.get('jurisdiction', '').lower()
     case_type = request.args.get('case_type', '').lower()
-    date_from = request.args.get('date_from', '')
-    date_to = request.args.get('date_to', '')
+    date_from_str = request.args.get('date_from', '')
+    date_to_str = request.args.get('date_to', '')
+    
+    date_from = datetime.strptime(date_from_str, '%Y-%m-%d') if date_from_str else None
+    date_to = datetime.strptime(date_to_str, '%Y-%m-%d') if date_to_str else None
 
-    # Construct the base query
     results = Document.query
 
-    # Filter by query
     if query:
         results = results.filter(db.or_(
             Document.filename.ilike(f'%{query}%'),
@@ -1150,15 +582,12 @@ def api_search():
             Document.description.ilike(f'%{query}%')
         ))
 
-    # Filter by jurisdiction (assuming you have a jurisdiction field in the Document model)
     if jurisdiction:
         results = results.filter(Document.category.ilike(f'%{jurisdiction}%'))
 
-    # Filter by case type (assuming you have a case_type field in the Document model)
     if case_type:
         results = results.filter(Document.category.ilike(f'%{case_type}%'))
 
-    # Filter by date range
     if date_from:
         results = results.filter(Document.uploaded_at >= date_from)
     if date_to:
@@ -1166,7 +595,6 @@ def api_search():
     
     results = results.all()
 
-    # Convert results to a list of dictionaries
     results_list = [{
         'id': doc.id,
         'filename': doc.filename,
@@ -1179,53 +607,53 @@ def api_search():
         'uploaded_at': doc.uploaded_at.isoformat()
     } for doc in results]
 
-    return jsonify(results_list)
-    
-    # Create a new SearchQuery object
-    search_query = SearchQuery(query=query)
-    
-    # Append the document results to the search query
-    for doc in results:
-        search_query.results.append(doc)
-    
-    # Add and commit the search query to the database
-    db.session.add(search_query)
+    search_history_entry = SearchHistory(
+        query=query,
+        search_type='internal',
+        jurisdiction=jurisdiction,
+        case_type=case_type,
+        date_from=date_from,
+        date_to=date_to,
+        results={'documents': results_list},
+        user_id=current_user.id
+    )
+    db.session.add(search_history_entry)
     db.session.commit()
 
-# External Search API with mock data for now
-@app.route('/api/search/external')
+    return jsonify({"results": results_list})
+    
+@app.route('/api/external-search', methods=['GET'])
 @login_required
 @role_required(['admin', 'lawyer'])
-def api_search_external():
+def api_external_search():
     query = request.args.get('q', '')
     search_engine = request.args.get('search_engine', 'google')
     
-    # Mock response since external APIs require configuration
     mock_results = [
         {
-            "title": f"Legal Resource: {query}",
-            "link": "https://example.com/legal-resource",
-            "snippet": f"This is a sample result for your search: {query}. Implement actual API integration with Google/Bing/DuckDuckGo.",
-            "citation": "Sample v. Citation, 2023 WL 1234567",
-            "displayLink": "example.com"
+            "title": f"Legal Resource: {query} (External)",
+            "link": "https://example.com/external-resource",
+            "snippet": f"This is an external sample result for: {query}.",
+            "citation": "External. v. Ref., 2024 INT.L 100",
+            "displayLink": "external.com"
         },
         {
-            "title": f"Case Law Reference: {query}",
-            "link": "https://example.com/case-law",
-            "snippet": f"Another sample result demonstrating the search functionality for: {query}",
-            "citation": "Reference, 2023 U.S. LEXIS 7890",
-            "displayLink": "legal-resources.com"
+            "title": f"Another External Case: {query}",
+            "link": "https://example.com/external-case",
+            "snippet": f"Details about another external legal case for: {query}.",
+            "citation": "OtherCase, 2024 FED 200",
+            "displayLink": "federal-law.com"
         }
     ]
     
-    # Create search history entry
-    search_history = SearchHistory(
+    search_history_entry = SearchHistory(
         query=query,
-        results=mock_results,
+        search_type='external',
         search_engine=search_engine,
+        results={'external_results': mock_results},
         user_id=current_user.id
     )
-    db.session.add(search_history)
+    db.session.add(search_history_entry)
     db.session.commit()
     
     return jsonify({
@@ -1234,29 +662,42 @@ def api_search_external():
         "query": query
     })
 
-# Search History API
-@app.route('/api/search/history')
+@app.route('/api/search/history', methods=['GET'])
 @login_required
-@role_required(['admin', 'lawyer'])
+@role_required(['admin', 'lawyer', 'staff'])
 def api_search_history():
-    # Get current user's search history
     history = SearchHistory.query.filter_by(user_id=current_user.id)\
                                .order_by(SearchHistory.created_at.desc())\
                                .limit(10).all()
     
     history_data = []
     for item in history:
+        results = item.results if item.results is not None else {}
+        
+        if item.search_type == 'internal':
+            displayed_results = results.get('documents', [])
+            result_count = len(displayed_results)
+            search_source = 'Internal'
+        elif item.search_type == 'external':
+            displayed_results = results.get('external_results', [])
+            result_count = len(displayed_results)
+            search_source = item.search_engine
+        else:
+            displayed_results = []
+            result_count = 0
+            search_source = 'Unknown'
+
         history_data.append({
             "id": item.id,
             "query": item.query,
-            "results": item.results or [],
-            "search_engine": item.search_engine,
+            "search_type": item.search_type,
+            "search_source": search_source,
+            "results_count": result_count,
             "created_at": item.created_at.isoformat()
         })
     
     return jsonify(history_data)
 
-# Login and Logout
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
