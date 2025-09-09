@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tasks"></i> Task Management</h2>
+                <a href="{{ url_for('new_task') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Task
+                </a>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Status</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="assigned" class="form-label">Assignment</label>
+                            <select class="form-select" id="assigned" name="assigned">
+                                <option value="">All Tasks</option>
+                                <option value="me" {% if assigned_filter == 'me' %}selected{% endif %}>Assigned to Me</option>
+                                <option value="unassigned" {% if assigned_filter == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i> Filter
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tasks Table -->
+            <div class="card">
+                <div class="card-body">
+                    {% if tasks.items %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Case</th>
+                                    <th>Due Date</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks.items %}
+                                <tr {% if task.due_date|is_overdue and task.status != 'completed' %}class="table-warning"{% endif %}>
+                                    <td>
+                                        <strong>{{ task.title }}</strong>
+                                        {% if task.description %}
+                                        <br><small class="text-muted">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if task.priority == 'urgent' %}danger{% elif task.priority == 'high' %}warning{% elif task.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                                            {{ task.priority.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}primary{% elif task.status == 'cancelled' %}secondary{% else %}warning{% endif %}">
+                                            {{ task.status.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if task.assigned_to %}
+                                            {{ task.assigned_to.get_full_name() }}
+                                        {% else %}
+                                            <span class="text-muted">Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.case %}
+                                            <a href="{{ url_for('case_detail', id=task.case.id) }}">{{ task.case.case_number }}</a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.due_date %}
+                                            {{ task.due_date.strftime('%Y-%m-%d') }}
+                                            {% if task.due_date|is_overdue and task.status != 'completed' %}
+                                                <i class="fas fa-exclamation-triangle text-danger" title="Overdue"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ task.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if task.status != 'completed' and (current_user.role == 'admin' or task.assigned_to_id == current_user.id or task.created_by_id == current_user.id) %}
+                                            <form method="POST" action="{{ url_for('complete_task', id=task.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-success" title="Mark Complete" onclick="return confirm('Mark this task as completed?')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if tasks.pages > 1 %}
+                    <nav aria-label="Tasks pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if tasks.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('tasks', page=tasks.prev_num, status=status_filter, assigned=assigned_filter) }}">Previous</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in tasks.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != tasks.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('tasks', page=page_num, status=status_filter, assigned=assigned_filter) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if tasks.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('tasks', page=tasks.next_num, status=status_filter, assigned=assigned_filter) }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No tasks found.</p>
+                        <a href="{{ url_for('new_task') }}" class="btn btn-primary">Create First Task</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

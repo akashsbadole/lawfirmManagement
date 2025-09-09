@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{% if document %}Edit Document{% else %}Upload New Document{% endif %}</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" {% if not document %}enctype="multipart/form-data"{% endif %}>
+            {% if not document %}
+            <div class="mb-3">
+                <label class="form-label">File</label>
+                <input type="file" class="form-control" name="file" required>
+            </div>
+            {% endif %}
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" name="category" required>
+                        <option value="Contracts" {% if document and document.category == 'Contracts' %}selected{% endif %}>Contracts</option>
+                        <option value="Evidence" {% if document and document.category == 'Evidence' %}selected{% endif %}>Evidence</option>
+                        <option value="Court Filings" {% if document and document.category == 'Court Filings' %}selected{% endif %}>Court Filings</option>
+                        <option value="Correspondence" {% if document and document.category == 'Correspondence' %}selected{% endif %}>Correspondence</option>
+                        <option value="Research" {% if document and document.category == 'Research' %}selected{% endif %}>Research</option>
+                        <option value="Other" {% if document and document.category == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Confidential</label>
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" name="confidential" id="confidential" {% if document and document.confidential %}checked{% endif %}>
+                        <label class="form-check-label" for="confidential">
+                            Mark as confidential
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3">{{ document.description if document else '' }}</textarea>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Client</label>
+                    <select class="form-select" name="client_id" required>
+                        <option value="">Select Client</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}" {% if document and document.client_id == client.id %}selected{% endif %}>{{ client.first_name }} {{ client.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Case (Optional)</label>
+                    <select class="form-select" name="case_id">
+                        <option value="">Select Case</option>
+                        {% for case in cases %}
+                        <option value="{{ case.id }}" {% if document and document.case_id == case.id %}selected{% endif %}>{{ case.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end">
+                <a href="{{ url_for('documents') }}" class="btn btn-secondary me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">{% if document %}Save{% else %}Upload{% endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

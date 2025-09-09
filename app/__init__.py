@@ -16,9 +16,30 @@ login.login_view = 'login'
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-from app.models import User
+from app.models import User, Permission
 
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
+# Make Permission enum available in templates
+@app.context_processor
+def inject_permissions():
+    return dict(Permission=Permission)
+
+# Add template filters
+@app.template_filter('is_overdue')
+def is_overdue(due_date):
+    """Check if a date is overdue"""
+    if not due_date:
+        return False
+    from datetime import datetime
+    return due_date < datetime.now()
+
+@app.template_filter('now')
+def now_filter():
+    """Get current datetime"""
+    from datetime import datetime
+    return datetime.now()
+
 from app import routes, models

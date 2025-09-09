@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Case Details</h1>
+        <a href="{{ request.referrer or url_for('cases') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">{{ case.title }}</h2>
+            <p><strong>Case Number:</strong> {{ case.case_number }}</p>
+            <p><strong>Description:</strong> {{ case.description }}</p>
+            <p><strong>Status:</strong> <span class="badge bg-info text-dark">{{ case.status }}</span></p>
+            <p><strong>Priority:</strong> <span class="badge 
+                {% if case.priority == 'High' %} bg-danger 
+                {% elif case.priority == 'Medium' %} bg-warning text-dark 
+                {% else %} bg-secondary {% endif %}">
+                {{ case.priority }}
+            </span></p>
+            <p><strong>Practice Area:</strong> {{ case.practice_area }}</p>
+            <p><strong>Case Type:</strong> {{ case.case_type }}</p>
+            <p><strong>Budget:</strong> ₹{{ case.budget }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Legal Search Engine</h1>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Search Legal Resources</h5>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-3" id="searchTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="internal-tab" data-bs-toggle="tab" data-bs-target="#internalSearch" type="button" role="tab" aria-controls="internalSearch" aria-selected="true">Internal Document Search</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="case-law-tab" data-bs-toggle="tab" data-bs-target="#caseLawSearch" type="button" role="tab" aria-controls="caseLawSearch" aria-selected="false">Case Law Search</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="external-tab" data-bs-toggle="tab" data-bs-target="#externalSearch" type="button" role="tab" aria-controls="externalSearch" aria-selected="false">External Web Search</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="searchTabsContent">
+            <div class="tab-pane fade show active" id="internalSearch" role="tabpanel" aria-labelledby="internal-tab">
+                <form id="internalSearchForm">
+                    <div class="row mb-3">
+                        <div class="col-md-9">
+                            <input type="text" class="form-control" id="internalSearchQuery" placeholder="Enter terms for internal documents...">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100" style="margin-top: 0px;">Search Internal</button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Jurisdiction</label>
+                            <select class="form-select" id="internalJurisdiction">
+                                <option value="">All Jurisdictions</option>
+                                <option value="federal">Federal</option>
+                                <option value="state">State</option>
+                                <option value="local">Local</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Case Type</label>
+                            <select class="form-select" id="internalCaseType">
+                                <option value="">All Case Types</option>
+                                <option value="civil">Civil</option>
+                                <option value="criminal">Criminal</option>
+                                <option value="administrative">Administrative</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="internalDateFrom">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="internalDateTo">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="caseLawSearch" role="tabpanel" aria-labelledby="case-law-tab">
+                <form id="caseLawSearchForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="caseLawSearchQuery" placeholder="Enter terms for case law search...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Year</label>
+                            <input type="number" class="form-control" id="caseLawYear" placeholder="e.g., 1973">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100" style="margin-top: 24px;">Search Case Law</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Court</label>
+                            <input type="text" class="form-control" id="caseLawCourt" placeholder="e.g., Supreme Court">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Jurisdiction</label>
+                            <select class="form-select" id="caseLawJurisdiction">
+                                <option value="">All Jurisdictions</option>
+                                <option value="federal">Federal</option>
+                                <option value="state">State</option>
+                                <option value="state_supreme">State Supreme Court</option>
+                                <option value="appellate">Appellate Court</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="externalSearch" role="tabpanel" aria-labelledby="external-tab">
+                <form id="externalSearchForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="externalSearchQuery" placeholder="Enter terms for external web search...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Search Engine</label>
+                            <select class="form-select" id="externalSearchEngine">
+                                <option value="google">Google</option>
+                                <option value="bing">Bing</option>
+                                <option value="duckduckgo">DuckDuckGo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100" style="margin-top: 24px;">Search External</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Search Results</h5>
+    </div>
+    <div class="card-body">
+        <div id="searchResults">
+            <p class="text-muted">Enter search terms and click Search to see results.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Recent Search History</h5>
+            </div>
+            <div class="card-body">
+                <div id="searchHistory">
+                    <p class="text-muted">Your recent searches will appear here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Legal Dictionary</h5>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="dictionaryTerm" placeholder="Enter a legal term...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchDictionary">Search</button>
+                </div>
+                <div id="dictionaryResult">
+                    <p class="text-muted">Enter a legal term to see its definition.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Citation Checker</h5>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="citationInput" placeholder="Enter a citation...">
+                    <button class="btn btn-outline-secondary" type="button" id="checkCitation">Check</button>
+                </div>
+                <div id="citationResult">
+                    <p class="text-muted">Enter a citation to verify it.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load search history on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchSearchHistory();
+    });
+
+    function fetchSearchHistory() {
+        fetch('/api/search/history')
+            .then(response => response.json())
+            .then(data => {
+                const historyDiv = document.getElementById('searchHistory');
+                if (data.length > 0) {
+                    let historyHtml = '<div class="list-group">';
+                    data.forEach(item => {
+                        const searchSource = item.search_source || 'N/A';
+                        const resultCount = item.results_count || 0;
+                        const date = new Date(item.created_at).toLocaleString();
+                        historyHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">${item.query}</h6>
+                                    <small>${date}</small>
+                                </div>
+                                <small class="text-muted">${searchSource} • ${resultCount} results</small>
+                            </div>
+                        `;
+                    });
+                    historyHtml += '</div>';
+                    historyDiv.innerHTML = historyHtml;
+                } else {
+                    historyDiv.innerHTML = '<p class="text-muted">No search history yet.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading search history:', error);
+            });
+    }
+
+    // Handle Internal Search Form submission
+    document.getElementById('internalSearchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('internalSearchQuery').value;
+        const jurisdiction = document.getElementById('internalJurisdiction').value;
+        const caseType = document.getElementById('internalCaseType').value;
+        const dateFrom = document.getElementById('internalDateFrom').value;
+        const dateTo = document.getElementById('internalDateTo').value;
+        
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        fetch(`/api/internal-search?q=${encodeURIComponent(query)}&jurisdiction=${jurisdiction}&case_type=${caseType}&date_from=${dateFrom}&date_to=${dateTo}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    let resultsHtml = `
+                        <div class="alert alert-info mb-3">
+                            <strong>Internal Document Search</strong>
+                            <strong class="ms-3">Results:</strong> ${data.results.length}
+                        </div>
+                        <div class="list-group">
+                    `;
+                    data.results.forEach(result => {
+                        resultsHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="/documents/${result.id}" class="text-decoration-none">${result.original_filename}</a>
+                                    </h5>
+                                    <small class="badge bg-info">${result.category}</small>
+                                </div>
+                                <p class="mb-1">${result.description}</p>
+                                <small class="text-muted">Uploaded: ${new Date(result.uploaded_at).toLocaleDateString()}</small>
+                            </div>
+                        `;
+                    });
+                    resultsHtml += '</div>';
+                    resultsDiv.innerHTML = resultsHtml;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-warning">
+                            <strong>Internal Document Search</strong>
+                            <p class="mb-0 mt-2">No documents found matching your criteria.</p>
+                        </div>
+                    `;
+                }
+                fetchSearchHistory();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing internal document search.</div>';
+            });
+    });
+
+    // Handle Case Law Search Form submission
+    document.getElementById('caseLawSearchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('caseLawSearchQuery').value;
+        const year = document.getElementById('caseLawYear').value;
+        const court = document.getElementById('caseLawCourt').value;
+        const jurisdiction = document.getElementById('caseLawJurisdiction').value;
+
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        fetch(`/api/case-law-search?q=${encodeURIComponent(query)}&year=${year}&court=${court}&jurisdiction=${jurisdiction}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    let resultsHtml = `
+                        <div class="alert alert-info mb-3">
+                            <strong>Case Law Search</strong>
+                            <strong class="ms-3">Results:</strong> ${data.results.length}
+                        </div>
+                        <div class="list-group">
+                    `;
+                    data.results.forEach(result => {
+                        resultsHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="#" class="text-decoration-none">${result.title}</a>
+                                    </h5>
+                                    <small class="badge bg-primary">${result.citation}</small>
+                                </div>
+                                <p class="mb-1">${result.summary}</p>
+                                <small class="text-muted">Court: ${result.court} | Year: ${result.year} | Jurisdiction: ${result.jurisdiction}</small>
+                            </div>
+                        `;
+                    });
+                    resultsHtml += '</div>';
+                    resultsDiv.innerHTML = resultsHtml;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-warning">
+                            <strong>Case Law Search</strong>
+                            <p class="mb-0 mt-2">No case law documents found matching your criteria.</p>
+                        </div>
+                    `;
+                }
+                fetchSearchHistory();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing case law search.</div>';
+            });
+    });
+
+    // Handle External Search Form submission
+    document.getElementById('externalSearchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('externalSearchQuery').value;
+        const searchEngine = document.getElementById('externalSearchEngine').value;
+        
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        fetch(`/api/external-search?q=${encodeURIComponent(query)}&search_engine=${searchEngine}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    let resultsHtml = `
+                        <div class="alert alert-info mb-3">
+                            <strong>External Web Search (${data.search_engine})</strong>
+                            <strong class="ms-3">Results:</strong> ${data.results.length}
+                        </div>
+                        <div class="list-group">
+                    `;
+                    data.results.forEach(result => {
+                        resultsHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="${result.link}" target="_blank" class="text-decoration-none">${result.title}</a>
+                                    </h5>
+                                    <small class="badge bg-secondary">${data.search_engine}</small>
+                                </div>
+                                <p class="mb-1">${result.snippet}</p>
+                                ${result.citation ? `<div class="mt-2"><strong>Citation:</strong> <code>${result.citation}</code></div>` : ''}
+                                <small class="text-muted">${result.displayLink}</small>
+                            </div>
+                        `;
+                    });
+                    resultsHtml += '</div>';
+                    resultsDiv.innerHTML = resultsHtml;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-warning">
+                            <strong>External Web Search (${data.search_engine})</strong>
+                            <p class="mb-0 mt-2">No external results found.</p>
+                        </div>
+                    `;
+                }
+                fetchSearchHistory();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing external search.</div>';
+            });
+    });
+
+    document.getElementById('searchDictionary').addEventListener('click', function() {
+        const term = document.getElementById('dictionaryTerm').value;
+        const resultDiv = document.getElementById('dictionaryResult');
+
+        if (!term) {
+            resultDiv.innerHTML = '<p class="text-danger">Please enter a legal term.</p>';
+            return;
+        }
+
+        resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        fetch(`/api/dictionary?term=${term}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const firstItem = data[0]; // Assuming only one relevant definition or picking the first one
+                    resultDiv.innerHTML = `
+                        <h5 class="mb-1">${firstItem.term}</h5>
+                        <p><strong>Definition:</strong> ${firstItem.definition}</p>
+                        ${firstItem.origin ? `<p class="text-muted"><strong>Origin:</strong> ${firstItem.origin}</p>` : ''}
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<p class="text-muted">No definition found for this term.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<p class="text-danger">An error occurred while searching the dictionary.</p>';
+            });
+    });
+
+    document.getElementById('checkCitation').addEventListener('click', function() {
+        const citation = document.getElementById('citationInput').value;
+        const resultDiv = document.getElementById('citationResult');
+
+        if (!citation) {
+            resultDiv.innerHTML = '<p class="text-danger">Please enter a citation.</p>';
+            return;
+        }
+
+        resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        fetch(`/api/citation?citation=${citation}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Citation Valid:</strong> ${data.citation}
+                            <p class="mb-0 mt-2">This citation is valid.</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Citation Invalid:</strong> ${data.citation}
+                            <p class="mb-0 mt-2">This citation is not valid.</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<p class="text-danger">An error occurred while checking the citation.</p>';
+            });
+    });
+</script>
+{% endblock %}

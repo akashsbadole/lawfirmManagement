@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Dashboard</h1>
+        <div class="text-muted">
+            <i class="fas fa-clock"></i> Welcome back, {{ current_user.get_full_name() }}!
+        </div>
+    </div>
+    
+    <!-- Statistics Cards Row 1 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-primary border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">Active Clients</div>
+                            <div class="h4 mb-0 fw-bold text-gray-800">{{ client_count }}</div>
+                            <div class="text-xs text-muted">Total registered clients</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-primary opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-success border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">Active Cases</div>
+                            <div class="h4 mb-0 fw-bold text-gray-800">{{ active_cases }}</div>
+                            <div class="text-xs text-muted">{{ case_count }} total cases</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-briefcase fa-2x text-success opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-info border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-info text-uppercase mb-1">My Tasks</div>
+                            <div class="h4 mb-0 fw-bold text-gray-800">{{ my_pending_tasks }}</div>
+                            <div class="text-xs text-muted">
+                                {% if overdue_tasks > 0 %}
+                                <span class="text-danger">{{ overdue_tasks }} overdue</span>
+                                {% else %}
+                                All up to date
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks fa-2x text-info opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-warning border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">Support Tickets</div>
+                            <div class="h4 mb-0 fw-bold text-gray-800">{{ my_tickets }}</div>
+                            <div class="text-xs text-muted">
+                                {% if open_tickets > 0 %}
+                                {{ open_tickets }} open system-wide
+                                {% else %}
+                                No open tickets
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-life-ring fa-2x text-warning opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-start border-success border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">Total Revenue</div>
+                            <div class="h4 mb-0 fw-bold text-gray-800">${{ "%.2f"|format(total_revenue) }}</div>
+                            <div class="text-xs text-muted">Paid invoices</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-success opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-start border-warning border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending Revenue</div>
+                            <div class="h4 mb-0 fw-bold text-gray-800">${{ "%.2f"|format(pending_revenue) }}</div>
+                            <div class="text-xs text-muted">Outstanding invoices</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-warning opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-start border-info border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-info text-uppercase mb-1">Billable Hours</div>
+                            <div class="h4 mb-0 fw-bold text-gray-800">{{ "%.1f"|format(total_billable_hours) }}</div>
+                            <div class="text-xs text-muted">Total logged hours</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-stopwatch fa-2x text-info opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 fw-bold text-primary">Monthly Revenue Trend</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">Case Status Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="caseStatusChart" width="100%" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practice Areas and Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">Practice Areas</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="practiceAreaChart" width="100%" height="60"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">Monthly Case Creation</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyCasesChart" width="100%" height="60"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity Tables -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-primary">Recent Cases</h6>
+                    <a href="{{ url_for('cases') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_cases %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Case Number</th>
+                                        <th>Title</th>
+                                        <th>Status</th>
+                                        <th>Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for case in recent_cases %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('case_detail', id=case.id) }}" class="text-decoration-none">
+                                                {{ case.case_number }}
+                                            </a>
+                                        </td>
+                                        <td>{{ case.title[:30] }}{% if case.title|length > 30 %}...{% endif %}</td>
+                                        <td>
+                                            <span class="badge bg-{{ case.get_status_color() }}">{{ case.status }}</span>
+                                        </td>
+                                        <td>{{ case.updated_at.strftime('%m/%d') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-briefcase fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No recent cases.</p>
+                            <a href="{{ url_for('new_case') }}" class="btn btn-primary btn-sm">Create First Case</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-primary">Upcoming Appointments</h6>
+                    <a href="{{ url_for('appointments') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_appointments %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Client</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appointment in recent_appointments %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('appointment_detail', id=appointment.id) }}" class="text-decoration-none">
+                                                {{ appointment.title[:20] }}{% if appointment.title|length > 20 %}...{% endif %}
+                                            </a>
+                                        </td>
+                                        <td>{{ appointment.client.first_name }} {{ appointment.client.last_name }}</td>
+                                        <td>{{ appointment.start_time.strftime('%m/%d') }}</td>
+                                        <td>{{ appointment.start_time.strftime('%H:%M') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-calendar fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No upcoming appointments.</p>
+                            <a href="{{ url_for('new_appointment') }}" class="btn btn-primary btn-sm">Schedule Appointment</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <a href="{{ url_for('new_client') }}" class="btn btn-outline-primary btn-lg w-100">
+                                <i class="fas fa-user-plus fa-2x mb-2"></i><br>
+                                <small>New Client</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <a href="{{ url_for('new_case') }}" class="btn btn-outline-success btn-lg w-100">
+                                <i class="fas fa-briefcase fa-2x mb-2"></i><br>
+                                <small>New Case</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <a href="{{ url_for('new_appointment') }}" class="btn btn-outline-info btn-lg w-100">
+                                <i class="fas fa-calendar-plus fa-2x mb-2"></i><br>
+                                <small>Schedule</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <a href="{{ url_for('new_time_entry') }}" class="btn btn-outline-warning btn-lg w-100">
+                                <i class="fas fa-clock fa-2x mb-2"></i><br>
+                                <small>Log Time</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <a href="{{ url_for('new_invoice') }}" class="btn btn-outline-secondary btn-lg w-100">
+                                <i class="fas fa-file-invoice fa-2x mb-2"></i><br>
+                                <small>New Invoice</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 mb-3">
+                            <a href="{{ url_for('search') }}" class="btn btn-outline-dark btn-lg w-100">
+                                <i class="fas fa-search fa-2x mb-2"></i><br>
+                                <small>Legal Search</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+const revenueChart = new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for item in monthly_revenue %}
+            '{{ item.year }}-{{ "%02d"|format(item.month) }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Revenue ($)',
+            data: [
+                {% for item in monthly_revenue %}
+                {{ item.total or 0 }},
+                {% endfor %}
+            ],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Case Status Chart
+const statusCtx = document.getElementById('caseStatusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for item in case_status_data %}
+            '{{ item.status }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for item in case_status_data %}
+                {{ item.count }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#28a745', '#17a2b8', '#ffc107', '#6c757d', '#dc3545'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+// Practice Area Chart
+const practiceCtx = document.getElementById('practiceAreaChart').getContext('2d');
+const practiceChart = new Chart(practiceCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for item in practice_area_data %}
+            '{{ item.practice_area }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Cases',
+            data: [
+                {% for item in practice_area_data %}
+                {{ item.count }},
+                {% endfor %}
+            ],
+            backgroundColor: 'rgba(54, 162, 235, 0.8)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Monthly Cases Chart
+const monthlyCasesCtx = document.getElementById('monthlyCasesChart').getContext('2d');
+const monthlyCasesChart = new Chart(monthlyCasesCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for item in monthly_cases %}
+            '{{ item.year }}-{{ "%02d"|format(item.month) }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'New Cases',
+            data: [
+                {% for item in monthly_cases %}
+                {{ item.count }},
+                {% endfor %}
+            ],
+            backgroundColor: 'rgba(255, 99, 132, 0.8)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

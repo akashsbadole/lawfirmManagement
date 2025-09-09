@@ -35,6 +35,10 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css"
     />
     <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link
       href="{{ url_for('static', filename='css/style.css') }}"
       rel="stylesheet"
     />
@@ -130,6 +134,32 @@
                 Search
               </a>
             </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint in ['tasks', 'new_task'] %}active{% endif %}"
+                href="{{ url_for('tasks') }}"
+              >
+                Tasks
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint in ['support_tickets', 'new_support_ticket', 'support_ticket_detail'] %}active{% endif %}"
+                href="{{ url_for('support_tickets') }}"
+              >
+                Support
+              </a>
+            </li>
+            {% if current_user.is_authenticated and current_user.has_permission(Permission.VIEW_ALL_USERS) %}
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint in ['users', 'new_user', 'edit_user', 'user_detail'] %}active{% endif %}"
+                href="{{ url_for('users') }}"
+              >
+                Users
+              </a>
+            </li>
+            {% endif %}
           </ul>
           <ul class="navbar-nav">
             {% if current_user.is_anonymous %}
@@ -145,18 +175,33 @@
                 role="button"
                 data-bs-toggle="dropdown"
               >
-                <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                <i class="bi bi-person-circle"></i> {{ current_user.get_full_name() }}
+                <span class="badge bg-{% if current_user.role == 'admin' %}danger{% elif current_user.role == 'lawyer' %}primary{% else %}secondary{% endif %} ms-1">
+                  {{ current_user.get_role_display() }}
+                </span>
               </a>
               <ul
                 class="dropdown-menu dropdown-menu-end"
                 aria-labelledby="userDropdown"
               >
-                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('user_detail', id=current_user.id) }}">
+                  <i class="bi bi-person"></i> My Profile
+                </a></li>
+                {% if current_user.has_permission(Permission.VIEW_ALL_USERS) %}
+                <li><a class="dropdown-item" href="{{ url_for('users') }}">
+                  <i class="bi bi-people"></i> Manage Users
+                </a></li>
+                {% endif %}
+                {% if current_user.has_permission(Permission.CONFIGURE_SYSTEM) %}
+                <li><a class="dropdown-item" href="#">
+                  <i class="bi bi-gear"></i> System Settings
+                </a></li>
+                {% endif %}
                 <li><hr class="dropdown-divider" /></li>
                 <li>
-                  <a class="dropdown-item" href="{{ url_for('logout') }}"
-                    >Logout</a
-                  >
+                  <a class="dropdown-item" href="{{ url_for('logout') }}">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                  </a>
                 </li>
               </ul>
             </li>
@@ -167,17 +212,30 @@
     </nav>
 
     <main class="flex-grow-1 container mt-4">
-      {% with messages = get_flashed_messages() %} {% if messages %}
-      <div class="alert alert-info alert-dismissible fade show" role="alert">
-        {% for message in messages %} {{ message }} {% endfor %}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-          aria-label="Close"
-        ></button>
-      </div>
-      {% endif %} {% endwith %} {% block content %}{% endblock %}
+      {% with messages = get_flashed_messages(with_categories=true) %} 
+      {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+          {% if category == 'success' %}
+            <i class="bi bi-check-circle-fill me-2"></i>
+          {% elif category == 'danger' or category == 'error' %}
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          {% elif category == 'warning' %}
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+          {% else %}
+            <i class="bi bi-info-circle-fill me-2"></i>
+          {% endif %}
+          {{ message }}
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+            aria-label="Close"
+          ></button>
+        </div>
+        {% endfor %}
+      {% endif %} 
+      {% endwith %} {% block content %}{% endblock %}
     </main>
 
     <footer class="footer mt-auto py-3 bg-dark text-light">

@@ -1,0 +1,172 @@
+{
+    "legal_resources": {
+        "supreme_court": {
+            "name": "Supreme Court of India",
+            "url": "https://main.sci.gov.in/",
+            "search_url": "https://main.sci.gov.in/case-status",
+            "description": "Apex court of India"
+        },
+        "high_courts": [
+            {
+                "name": "Delhi High Court",
+                "url": "http://delhihighcourt.nic.in/",
+                "jurisdiction": "Delhi"
+            },
+            {
+                "name": "Bombay High Court",
+                "url": "https://bombayhighcourt.nic.in/",
+                "jurisdiction": "Maharashtra, Goa, Dadra and Nagar Haveli"
+            },
+            {
+                "name": "Calcutta High Court",
+                "url": "https://calcuttahighcourt.gov.in/",
+                "jurisdiction": "West Bengal, Sikkim, Andaman and Nicobar Islands"
+            },
+            {
+                "name": "Madras High Court",
+                "url": "https://hcmadras.tn.gov.in/",
+                "jurisdiction": "Tamil Nadu, Puducherry"
+            },
+            {
+                "name": "Karnataka High Court",
+                "url": "https://karnatakajudiciary.kar.nic.in/",
+                "jurisdiction": "Karnataka"
+            }
+        ],
+        "legal_databases": [
+            {
+                "name": "Indian Kanoon",
+                "url": "https://indiankanoon.org/",
+                "search_url": "https://indiankanoon.org/search/",
+                "description": "Free legal database for Indian case law"
+            },
+            {
+                "name": "Manupatra",
+                "url": "https://www.manupatrafast.com/",
+                "description": "Premium legal database"
+            },
+            {
+                "name": "SCC Online",
+                "url": "https://www.scconline.com/",
+                "description": "Supreme Court Cases Online"
+            },
+            {
+                "name": "Legal Crystal",
+                "url": "https://www.legalcrystal.com/",
+                "description": "Legal research platform"
+            }
+        ],
+        "acts_and_codes": [
+            {
+                "name": "Indian Penal Code, 1860",
+                "short_name": "IPC",
+                "category": "Criminal Law"
+            },
+            {
+                "name": "Code of Criminal Procedure, 1973",
+                "short_name": "CrPC",
+                "category": "Criminal Law"
+            },
+            {
+                "name": "Code of Civil Procedure, 1908",
+                "short_name": "CPC",
+                "category": "Civil Law"
+            },
+            {
+                "name": "Indian Contract Act, 1872",
+                "short_name": "Contract Act",
+                "category": "Contract Law"
+            },
+            {
+                "name": "Companies Act, 2013",
+                "short_name": "Companies Act",
+                "category": "Corporate Law"
+            },
+            {
+                "name": "Income Tax Act, 1961",
+                "short_name": "IT Act",
+                "category": "Tax Law"
+            },
+            {
+                "name": "Goods and Services Tax Act, 2017",
+                "short_name": "GST Act",
+                "category": "Tax Law"
+            },
+            {
+                "name": "Indian Evidence Act, 1872",
+                "short_name": "Evidence Act",
+                "category": "Evidence Law"
+            },
+            {
+                "name": "Constitution of India, 1950",
+                "short_name": "Constitution",
+                "category": "Constitutional Law"
+            },
+            {
+                "name": "Arbitration and Conciliation Act, 1996",
+                "short_name": "Arbitration Act",
+                "category": "Alternative Dispute Resolution"
+            }
+        ],
+        "practice_areas": [
+            "Constitutional Law",
+            "Criminal Law",
+            "Civil Law",
+            "Corporate Law",
+            "Tax Law",
+            "Family Law",
+            "Property Law",
+            "Labour Law",
+            "Intellectual Property Law",
+            "Environmental Law",
+            "Banking Law",
+            "Insurance Law",
+            "Consumer Protection Law",
+            "Cyber Law",
+            "Immigration Law"
+        ]
+    },
+    "court_fees": {
+        "supreme_court": {
+            "civil_appeal": 15000,
+            "criminal_appeal": 5000,
+            "writ_petition": 10000
+        },
+        "high_court": {
+            "civil_suit": 5000,
+            "criminal_appeal": 2000,
+            "writ_petition": 3000
+        },
+        "district_court": {
+            "civil_suit": 1000,
+            "criminal_case": 500
+        }
+    },
+    "legal_forms": [
+        {
+            "name": "Vakalatnama",
+            "description": "Authorization to appear on behalf of client",
+            "category": "General"
+        },
+        {
+            "name": "Plaint",
+            "description": "Statement of claim in civil suit",
+            "category": "Civil"
+        },
+        {
+            "name": "Written Statement",
+            "description": "Defendant's response to plaint",
+            "category": "Civil"
+        },
+        {
+            "name": "Bail Application",
+            "description": "Application for bail in criminal cases",
+            "category": "Criminal"
+        },
+        {
+            "name": "Divorce Petition",
+            "description": "Petition for dissolution of marriage",
+            "category": "Family"
+        }
+    ]
+}

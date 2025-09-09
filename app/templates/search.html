@@ -13,6 +13,9 @@
                 <button class="nav-link active" id="internal-tab" data-bs-toggle="tab" data-bs-target="#internalSearch" type="button" role="tab" aria-controls="internalSearch" aria-selected="true">Internal Document Search</button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="case-law-tab" data-bs-toggle="tab" data-bs-target="#caseLawSearch" type="button" role="tab" aria-controls="caseLawSearch" aria-selected="false">Case Law Search</button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="external-tab" data-bs-toggle="tab" data-bs-target="#externalSearch" type="button" role="tab" aria-controls="externalSearch" aria-selected="false">External Web Search</button>
             </li>
         </ul>
@@ -55,6 +58,39 @@
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Date To</label>
                             <input type="date" class="form-control" id="internalDateTo">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="caseLawSearch" role="tabpanel" aria-labelledby="case-law-tab">
+                <form id="caseLawSearchForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="caseLawSearchQuery" placeholder="Enter terms for case law search...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Year</label>
+                            <input type="number" class="form-control" id="caseLawYear" placeholder="e.g., 1973">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100" style="margin-top: 24px;">Search Case Law</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Court</label>
+                            <input type="text" class="form-control" id="caseLawCourt" placeholder="e.g., Supreme Court">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Jurisdiction</label>
+                            <select class="form-select" id="caseLawJurisdiction">
+                                <option value="">All Jurisdictions</option>
+                                <option value="federal">Federal</option>
+                                <option value="state">State</option>
+                                <option value="state_supreme">State Supreme Court</option>
+                                <option value="appellate">Appellate Court</option>
+                            </select>
                         </div>
                     </div>
                 </form>
@@ -195,7 +231,7 @@
         const resultsDiv = document.getElementById('searchResults');
         resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         
-        fetch(`/api/search?q=${encodeURIComponent(query)}&jurisdiction=${jurisdiction}&case_type=${caseType}&date_from=${dateFrom}&date_to=${dateTo}`)
+        fetch(`/api/internal-search?q=${encodeURIComponent(query)}&jurisdiction=${jurisdiction}&case_type=${caseType}&date_from=${dateFrom}&date_to=${dateTo}`)
             .then(response => response.json())
             .then(data => {
                 if (data.results && data.results.length > 0) {
@@ -230,11 +266,66 @@
                         </div>
                     `;
                 }
-                fetchSearchHistory(); // Refresh search history after an internal search
+                fetchSearchHistory();
             })
             .catch(error => {
                 console.error('Error:', error);
-                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing internal search.</div>';
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing internal document search.</div>';
+            });
+    });
+
+    // Handle Case Law Search Form submission
+    document.getElementById('caseLawSearchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('caseLawSearchQuery').value;
+        const year = document.getElementById('caseLawYear').value;
+        const court = document.getElementById('caseLawCourt').value;
+        const jurisdiction = document.getElementById('caseLawJurisdiction').value;
+
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        fetch(`/api/case-law-search?q=${encodeURIComponent(query)}&year=${year}&court=${court}&jurisdiction=${jurisdiction}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    let resultsHtml = `
+                        <div class="alert alert-info mb-3">
+                            <strong>Case Law Search</strong>
+                            <strong class="ms-3">Results:</strong> ${data.results.length}
+                        </div>
+                        <div class="list-group">
+                    `;
+                    data.results.forEach(result => {
+                        resultsHtml += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        <a href="#" class="text-decoration-none">${result.title}</a>
+                                    </h5>
+                                    <small class="badge bg-primary">${result.citation}</small>
+                                </div>
+                                <p class="mb-1">${result.summary}</p>
+                                <small class="text-muted">Court: ${result.court} | Year: ${result.year} | Jurisdiction: ${result.jurisdiction}</small>
+                            </div>
+                        `;
+                    });
+                    resultsHtml += '</div>';
+                    resultsDiv.innerHTML = resultsHtml;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-warning">
+                            <strong>Case Law Search</strong>
+                            <p class="mb-0 mt-2">No case law documents found matching your criteria.</p>
+                        </div>
+                    `;
+                }
+                fetchSearchHistory();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">An error occurred while performing case law search.</div>';
             });
     });
 
@@ -248,7 +339,7 @@
         const resultsDiv = document.getElementById('searchResults');
         resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         
-        fetch(`/api/search/external?q=${encodeURIComponent(query)}&search_engine=${searchEngine}`)
+        fetch(`/api/external-search?q=${encodeURIComponent(query)}&search_engine=${searchEngine}`)
             .then(response => response.json())
             .then(data => {
                 if (data.results && data.results.length > 0) {
@@ -284,7 +375,7 @@
                         </div>
                     `;
                 }
-                fetchSearchHistory(); // Refresh search history after an external search
+                fetchSearchHistory();
             })
             .catch(error => {
                 console.error('Error:', error);
